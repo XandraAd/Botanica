@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+/* Carousel fixes (keep yours) */
+.carousel,
+.carousel .slider,
+.carousel .slide,
+.carousel .slide img {
+  height: 100% !important;
+}
+
+.carousel .control-dots {
+  display: none !important;
+}
+
+/* Announcement scroll */
+@keyframes scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-scroll {
+  display: inline-block;       
+  white-space: nowrap;         
+  animation: scroll 30s linear infinite;
+}

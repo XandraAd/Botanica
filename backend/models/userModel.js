@@ -1,0 +1,32 @@
+// models/userModel.js
+import mongoose from "mongoose";
+
+const userSchema = new mongoose.Schema({
+  name: { 
+    type: String, 
+    required: true 
+  },
+  email: { 
+    type: String, 
+    required: true, 
+    unique: true 
+  }, 
+  password: { 
+    type: String, 
+    required: true 
+  },
+  avatar: { 
+    type: String, 
+    default: "" 
+  },
+  isAdmin: { 
+    type: Boolean, 
+    required: true, // Fixed: removed the extra comma and formatting issue
+    default: false 
+  }
+}, { 
+  timestamps: true 
+});
+
+const User = mongoose.model("User", userSchema);
+export default User;
