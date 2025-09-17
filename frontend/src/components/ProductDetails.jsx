@@ -1,11 +1,12 @@
 // src/components/ProductDetailsModal.jsx
 import React, { useState } from "react";
 import { FaTimes } from "react-icons/fa";
-import { useDispatch } from "react-redux";
-import { addToCart } from "../slices/cartSlice";
+import { useDispatch,useSelector } from "react-redux";
+import {addToCartApi } from "../slices/cartSlice";
 
 const ProductDetailsModal = ({ product, onClose }) => {
   const dispatch = useDispatch();
+   const { userInfo } = useSelector((state) => state.auth);
   const [quantity, setQuantity] = useState(1);
   const [selectedColor, setSelectedColor] = useState(product.colors?.[0] || "");
 
@@ -18,11 +19,34 @@ const ProductDetailsModal = ({ product, onClose }) => {
     return "/fallback-image.jpg";
   };
 
-  const handleAddToCart = () => {
-    dispatch(addToCart({ ...product, quantity, color: selectedColor }));
-    onClose();
-  };
 
+  const handleAddToCart = () => {
+    if (!userInfo?._id) {
+      alert("Please log in to add items to your cart");
+      return;
+    }
+
+    const item = {
+      _id: product._id,
+      name: product.name,
+      price: product.price,
+      images: product.images,
+      color: selectedColor,
+      size: product.size || "standard",
+      quantity,
+    };
+
+    dispatch(addToCartApi({ userId: userInfo._id, item }))
+      .unwrap()
+      .then(() => {
+        alert("Added to cart!");
+        onClose();
+      })
+      .catch((err) => {
+        console.error("Cart API error:", err);
+        alert("Failed to add to cart. Please try again.");
+      });
+  };
   return (
     <div
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"

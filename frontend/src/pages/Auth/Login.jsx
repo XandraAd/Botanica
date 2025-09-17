@@ -4,7 +4,9 @@ import axios from "axios";
 import { FaEye, FaEyeSlash, FaEnvelope, FaLock, FaSignInAlt } from "react-icons/fa";
 import { ImSpinner8 } from "react-icons/im";
 import { useDispatch } from "react-redux";
-import { setCredentials } from "../../slices/authSlice"; // adjust path if needed
+import { getCurrentUser } from "../../slices/authSlice";
+import { fetchCart } from "../../slices/cartSlice"; 
+
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -68,13 +70,17 @@ export default function Login() {
     // ✅ Save user info in localStorage
     localStorage.setItem("userInfo", JSON.stringify(res.data));
 
-    // ✅ Save to Redux
-    dispatch(setCredentials(res.data));
+
 
     // ✅ Attach token to axios globally
     if (res.data.token) {
       axios.defaults.headers.common["Authorization"] = `Bearer ${res.data.token}`;
     }
+
+  await dispatch(getCurrentUser());
+await dispatch(fetchCart(res.data._id));
+
+ 
 
     setMessageType("success");
     setMessage("Login successful! Redirecting...");

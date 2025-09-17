@@ -1,24 +1,77 @@
-// src/components/ProductCard.jsx
 import React from "react";
 import { FaHeart, FaRegEye } from "react-icons/fa";
 import { IoMdShuffle } from "react-icons/io";
 import { FiShoppingBag } from "react-icons/fi";
-import { useDispatch } from "react-redux";
-import { addToCart } from "../slices/cartSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { addToCartApi } from "../slices/cartSlice";
+import { toast } from "react-toastify";
 
 const ProductCard = ({ product, variant, onView }) => {
   const dispatch = useDispatch();
+  const { userInfo } = useSelector((state) => state.auth);
 
   if (!product) return null;
 
+  // ✅ Add to cart handler (backend only)
   const handleAddToCart = () => {
-    dispatch(addToCart({ ...product, quantity: 1 }));
+    if (!userInfo?._id) {
+      toast.error("Please log in to add items to your cart");
+      return;
+    }
+
+    const size = product.size || "standard"; // fallback
+    const item = {
+      _id: product._id,
+      name: product.name,
+      price: product.price,
+      images: product.images,
+      size,
+      quantity: 1,
+    };
+
+    dispatch(addToCartApi({ userId: userInfo._id, item }))
+      .unwrap()
+      .then(() => toast.success("Added to cart!"))
+      .catch((error) => {
+        console.error("Failed to add to cart:", error);
+        toast.error("Failed to add to cart. Try again.");
+      });
   };
 
+  // ✅ Wishlist handler (still localStorage)
+  const handleAddToWishList = () => {
+    const wishlistItem = {
+      _id: product._id,
+      name: product.name,
+      price: product.price,
+      images: product.images,
+      addedAt: new Date().toISOString(),
+    };
+
+    try {
+      const existingWishlist = JSON.parse(localStorage.getItem("wishlist") || "[]");
+      const alreadyExists = existingWishlist.some((item) => item._id === product._id);
+
+      if (alreadyExists) {
+        toast.info("Item already in wishlist");
+        return;
+      }
+
+      const newWishlist = [...existingWishlist, wishlistItem];
+      localStorage.setItem("wishlist", JSON.stringify(newWishlist));
+      toast.success("Added to wishlist!");
+    } catch (error) {
+      console.error("Error adding to wishlist:", error);
+      toast.error("Failed to add to wishlist");
+    }
+  };
+
+  // ✅ Image resolver
   const getImageUrl = (product) => {
-    if (product.arrivalImage) return `http://localhost:5000${product.arrivalImage}`;
-    if (product.collectionImage) return `http://localhost:5000${product.collectionImage}`;
-    if (product.images?.length > 0) return `http://localhost:5000${product.images[0]}`;
+    const base = "http://localhost:5000";
+    if (product.arrivalImage) return `${base}${product.arrivalImage}`;
+    if (product.collectionImage) return `${base}${product.collectionImage}`;
+    if (product.images?.length > 0) return `${base}${product.images[0]}`;
     return "/fallback-image.jpg";
   };
 
@@ -42,17 +95,25 @@ const ProductCard = ({ product, variant, onView }) => {
           <button
             onClick={handleAddToCart}
             className="p-2 bg-green-600 rounded-full shadow-lg transform translate-y-6 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 delay-100"
+            aria-label="Add to cart"
           >
             <FiShoppingBag size={18} className="text-white" />
           </button>
 
           {/* Wishlist */}
-          <button className="p-2 bg-white rounded-full shadow-lg transform translate-y-6 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 delay-200">
+          <button
+            onClick={handleAddToWishList}
+            className="p-2 bg-white rounded-full shadow-lg transform translate-y-6 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 delay-200"
+            aria-label="Add to wishlist"
+          >
             <FaHeart size={18} className="text-gray-700" />
           </button>
 
           {/* Compare */}
-          <button className="p-2 bg-white rounded-full shadow-lg transform translate-y-6 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 delay-300">
+          <button
+            className="p-2 bg-white rounded-full shadow-lg transform translate-y-6 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 delay-300"
+            aria-label="Compare product"
+          >
             <IoMdShuffle size={18} className="text-gray-700" />
           </button>
 
@@ -60,6 +121,7 @@ const ProductCard = ({ product, variant, onView }) => {
           <button
             onClick={() => onView(product)}
             className="p-2 bg-white rounded-full shadow-lg transform translate-y-6 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 delay-400"
+            aria-label="View product details"
           >
             <FaRegEye size={18} className="text-gray-700" />
           </button>
@@ -67,11 +129,20 @@ const ProductCard = ({ product, variant, onView }) => {
       </div>
 
       {/* Info */}
-      <div onClick={() => onView(product)} className="p-4 flex flex-col gap-2 cursor-pointer">
-        <h3 className="font-semibold text-base sm:text-lg truncate">{product.name}</h3>
-        <p className="text-gray-600 text-sm">{product.collection}</p>
+      <div
+        onClick={() => onView(product)}
+        className="p-4 flex flex-col gap-2 cursor-pointer"
+      >
+        <h3 className="font-semibold text-base sm:text-lg truncate">
+          {product.name}
+        </h3>
+        {product.collection && (
+          <p className="text-gray-600 text-sm">{product.collection}</p>
+        )}
         <div className="flex justify-between items-center mt-3">
-          <span className="font-bold text-lg">${product.price}</span>
+          <span className="font-bold text-lg">
+            ${product.price ? product.price.toFixed(2) : "N/A"}
+          </span>
         </div>
       </div>
     </div>

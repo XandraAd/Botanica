@@ -72,17 +72,19 @@ const ProductList = () => {
 
     try {
       let finalImages = [];
+for (const img of images) {
+  if (img instanceof File) {
+    const formData = new FormData();
+    formData.append("image", img);
 
-      for (const img of images) {
-        if (img instanceof File) {
-          const formData = new FormData();
-          formData.append("image", img);
-          const uploadResponse = await uploadProductImage(formData).unwrap();
-          finalImages.push(uploadResponse.image || uploadResponse.url);
-        } else {
-          finalImages.push(img);
-        }
-      }
+    // Cloudinary returns { url, public_id }
+    const uploadResponse = await uploadProductImage(formData).unwrap();
+    finalImages.push(uploadResponse.url);
+  } else {
+    finalImages.push(img); // in case editing with existing image URLs
+  }
+}
+
 
       const productData = {
         name: name.trim(),

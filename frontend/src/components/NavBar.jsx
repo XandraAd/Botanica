@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { FaCartArrowDown, FaBars, FaTimes, FaUser, FaSignOutAlt, FaSearch, FaHeart } from "react-icons/fa";
 import { useSelector, useDispatch } from "react-redux";
 import { logoutUser } from "../slices/authSlice.js";
+import CartDrawer from './CartDrawer.jsx';
 
 const NavBar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -12,6 +13,7 @@ const NavBar = () => {
   const cart = useSelector((state) => state.cart);
   const auth = useSelector((state) => state.auth);
   const dispatch = useDispatch();
+  const [isCartOpen, setCartOpen] = useState(false);
 
   // Cart total items
   const cartItemsCount = cart.cartItems.reduce((total, item) => total + item.quantity, 0);
@@ -37,9 +39,12 @@ const NavBar = () => {
   const handleLogout = async () => {
     try {
       await dispatch(logoutUser()).unwrap();
+      // Clear local storage and redirect
+      localStorage.removeItem('userInfo');
       window.location.href = '/';
     } catch (error) {
       console.error('Logout failed:', error);
+      // Still clear local storage on error
       localStorage.removeItem('userInfo');
       window.location.href = '/';
     }
@@ -79,6 +84,18 @@ const NavBar = () => {
 
   return (
     <nav className={`sticky top-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-white shadow-md' : 'bg-white'}`}>
+      <style>
+        {`
+          @keyframes scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+          }
+          .animate-scroll {
+            animation: scroll 30s linear infinite;
+          }
+        `}
+      </style>
+      
       {/* Top announcement bar with continuous CSS scroll */}
       <div className="bg-green-900 text-center py-2 text-xs text-white uppercase overflow-hidden">
         <div className="animate-scroll inline-block whitespace-nowrap">
@@ -138,10 +155,9 @@ const NavBar = () => {
               <FaHeart className="text-lg" />
             </Link>
 
-            <Link
-              to="/cart"
+            <button
+              onClick={() => setCartOpen(true)}
               className="relative p-2 text-gray-700 hover:text-gray-900"
-              onClick={closeMenu}
             >
               <FaCartArrowDown className="text-lg" />
               {cartItemsCount > 0 && (
@@ -149,7 +165,7 @@ const NavBar = () => {
                   {cartItemsCount}
                 </span>
               )}
-            </Link>
+            </button>
 
             {/* User Section */}
             {auth.userInfo ? (
@@ -260,6 +276,7 @@ const NavBar = () => {
           </div>
         </div>
       )}
+      <CartDrawer isOpen={isCartOpen} onClose={() => setCartOpen(false)} />
     </nav>
   );
 };

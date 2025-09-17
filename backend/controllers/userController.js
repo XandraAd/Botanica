@@ -42,6 +42,10 @@ export const createUser = asyncHandler(async (req, res) => {
   }
 });
 
+
+// @desc    Auth user & get token
+// @route   POST /api/users/auth
+// @access  Public
 export const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
@@ -50,43 +54,47 @@ export const loginUser = asyncHandler(async (req, res) => {
     throw new Error("Please provide email and password");
   }
 
-  const existingUser = await User.findOne({ email });
+  const user = await User.findOne({ email });
 
-  if (!existingUser) {
+  if (!user) {
     res.status(401);
     throw new Error("Invalid email or password");
   }
 
-  const isPasswordValid = await bcrypt.compare(password, existingUser.password);
+  const isPasswordValid = await bcrypt.compare(password, user.password);
 
   if (!isPasswordValid) {
     res.status(401);
     throw new Error("Invalid email or password");
   }
 
-  const token=createToken(res, existingUser._id);
-  console.log(req.headers.authorization);
+  // ✅ create token and set cookie
+  const token = createToken(res, user._id);
 
-
+  // ✅ also send token back in JSON
   res.status(200).json({
-    _id: existingUser._id,
-    name: existingUser.name,
-    email: existingUser.email,
-    avatar: existingUser.avatar,
-    isAdmin: existingUser.isAdmin,
-    token,
-    message: "Login successful"
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    avatar: user.avatar,
+    isAdmin: user.isAdmin,
+    token, // 👈 this is what frontend needs
+    message: "Login successful",
   });
 });
 
+
 export const logoutCurrentUser = asyncHandler(async (req, res) => {
+  // Clear cookie
   res.cookie("jwt", "", {
-    httpOnly: true, // Fixed typo: httyOnly -> httpOnly
+    httpOnly: true,
     expires: new Date(0),
   });
 
-  res.status(200).json({ message: "Logged out successfully" });
+  // Tell frontend to clear local token as well
+  res.status(200).json({ message: "Logged out successfully, clear client token" });
 });
+
 
 export  const getAllUsers = asyncHandler(async (req, res) => {
   try {

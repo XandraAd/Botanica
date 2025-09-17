@@ -16,6 +16,8 @@ import orderRoutes from "./routes/orderRoutes.js";
 import carouselRoutes from "./routes/carouselRoutes.js";
 import decorRoutes from "./routes/decorRoutes.js";
 import collectionRoutes from "./routes/collectionRoutes.js";
+import cartRoutes from "./routes/CartRoutes.js";
+import paymentRoutes from "./routes/PaymentRoutes.js"
 
 
 
@@ -48,8 +50,10 @@ app.use("/api/upload", uploadRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/carousel", carouselRoutes);
 app.use("/api/collections",collectionRoutes);
+app.use("/api/cart",cartRoutes)
 
 app.use("/api/decor", decorRoutes);
+app.use("/api/payment",paymentRoutes)
 
 
 

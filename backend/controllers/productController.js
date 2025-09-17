@@ -140,7 +140,7 @@ export const fetchProducts = asyncHandler(async (req, res) => {
   const count = await Product.countDocuments(filter);
   const products = await Product.find(filter)
     .populate("category")
-    .populate("collection")
+    .populate("collections")
     .limit(pageSize)
     .skip(pageSize * (page - 1))
     .sort({ createdAt: -1 });

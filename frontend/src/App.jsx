@@ -1,10 +1,10 @@
 import React, { useEffect } from "react";
 import { Route, Routes, Navigate, Outlet } from "react-router-dom"; // Added Outlet import
 import { useSelector, useDispatch } from "react-redux";
-import { setUserFromStorage } from "./slices/authSlice";
+
 import Home from "./pages/Home";
 import NavBar from "./components/NavBar";
-import Checkout from "./pages/Checkout";
+
 import Newest from "./pages/Products/Newest";
 import Plants from "./pages/Products/Plants";
 import ProductPage from "./pages/Products/ProductPage";
@@ -29,14 +29,27 @@ import AdminLayout from "./pages/Admin/AdminLayout";
 import CollectionList from "./pages/Admin/CollectionList";
 import DecorList from "./pages/Admin/DecorList";
 import ProductDetails from "./components/ProductDetails";
+import Cart from "./pages/CartPage";
+import CheckoutPage from "./pages/CheckoutPage";
+import OrderConfirmation from "./pages/Orders/OrderConfirmation";
+import { fetchCart } from "./slices/cartSlice";
+import { getCurrentUser } from "./slices/authSlice";
+import PaymentSuccess from "./pages/Orders/PaymentSuccess";
 
 function App() {
   const { userInfo } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(setUserFromStorage());
-  }, [dispatch]);
+    dispatch(getCurrentUser());
+  }, [dispatch]);;
+
+    // ✅ fetch cart when userInfo changes
+  useEffect(() => {
+    if (userInfo?._id) {
+      dispatch(fetchCart(userInfo._id));
+    }
+  }, [dispatch, userInfo]);
 
   return (
     <div className="app flex flex-col min-h-screen">
@@ -69,6 +82,11 @@ function App() {
           <Route path="contact" element={<Contact />} />
           <Route path="about" element={<About />} />
           <Route path="product-details" element={<ProductDetails/>}/>
+          <Route path="cart" element={<Cart />} />
+          <Route path="/order-confirmation" element={<OrderConfirmation />} />
+           <Route path="/payment-success" element={<PaymentSuccess />} />
+      
+
           <Route
             path="login"
             element={userInfo ? <Navigate to="/profile" replace /> : <Login />}
@@ -81,7 +99,7 @@ function App() {
             path="checkout"
             element={
               <ProtectedRoute>
-                <Checkout />
+                <CheckoutPage />
               </ProtectedRoute>
             }
           />
@@ -93,6 +111,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+          
         </Route>
 
         {/* ---------- Admin Routes ---------- */}

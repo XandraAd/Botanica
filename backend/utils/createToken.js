@@ -1,3 +1,4 @@
+// utils/createToken.js
 import jwt from "jsonwebtoken";
 
 const createToken = (res, userId) => {
@@ -5,15 +6,15 @@ const createToken = (res, userId) => {
     expiresIn: "30d",
   });
 
-  // Set cookie
+  // set as cookie (optional if you want cookie auth)
   res.cookie("jwt", token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV !== "development",
-    sameSite: "strict",
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
     maxAge: 30 * 24 * 60 * 60 * 1000,
   });
 
-  return token; // ✅ return the token as well
+  return token; // 👈 return so frontend can use it
 };
 
 export default createToken;

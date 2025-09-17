@@ -6,7 +6,7 @@ export const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/ap
 // Root base (no /api, for static files like /uploads)
 export const BASE_URL = import.meta.env.VITE_BASE_URL || "http://localhost:5000";
 
-export const DECOR_URL = `${API_URL}/decor`;
+
 
 
 // Endpoints
@@ -17,3 +17,4 @@ export const PRODUCT_URL = `${API_URL}/products`;
 export const UPLOAD_URL = `${API_URL}/upload`;
 export const ORDERS_URL = `${API_URL}/orders`;
 export const PAYPAL_URL = `${API_URL}/config/paypal`;
+export const DECOR_URL = `${API_URL}/decor`;
