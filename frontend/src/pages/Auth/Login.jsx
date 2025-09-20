@@ -6,6 +6,8 @@ import { ImSpinner8 } from "react-icons/im";
 import { useDispatch } from "react-redux";
 import { getCurrentUser } from "../../slices/authSlice";
 import { fetchCart } from "../../slices/cartSlice"; 
+import { API_URL } from "../../store/constants";
+
 
 
 export default function Login() {
@@ -65,7 +67,7 @@ export default function Login() {
   setMessageType("");
 
   try {
-    const res = await axios.post("http://localhost:5000/api/users/auth", form);
+    const res = await axios.post(`${API_URL}/users/auth`, form);
 
     // ✅ Save user info in localStorage
     localStorage.setItem("userInfo", JSON.stringify(res.data));
