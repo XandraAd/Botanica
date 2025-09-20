@@ -1,17 +1,31 @@
 import asyncHandler from "../middlewares/asyncHandler.js";
 import Collection from "../models/collectionModel.js";
+import Product from "../models/productModel.js";
 
-// @desc    Get all collections (with product count)
+// @desc    Get all collections (with products populated, count, and preview image)
 // @route   GET /api/collections
 // @access  Public
 export const getCollections = asyncHandler(async (req, res) => {
-  const collections = await Collection.find({});
+  const collections = await Collection.find({}).populate({
+    path: "products",
+    select: "name images",
+  });
 
-  // Add product count dynamically
-  const collectionsWithCounts = collections.map((col) => ({
-    ...col.toObject(),
-    productsCount: col.products ? col.products.length : 0,
-  }));
+  const collectionsWithCounts = collections.map((col) => {
+    // fallback: collection.image -> first product image -> placeholder
+    let preview = col.image || col.products?.[0]?.images?.[0] || null;
+
+    // if relative path (local upload), prepend backend URL
+    if (preview && !preview.startsWith("http")) {
+      preview = `http://localhost:5000${preview}`;
+    }
+
+    return {
+      ...col.toObject(),
+      productsCount: col.products?.length || 0,
+      previewImage: preview,
+    };
+  });
 
   res.json(collectionsWithCounts);
 });

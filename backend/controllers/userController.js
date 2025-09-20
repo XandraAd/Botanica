@@ -3,9 +3,6 @@ import asyncHandler from "../middlewares/asyncHandler.js";
 import bcrypt from "bcryptjs";
 import createToken from "../utils/createToken.js";
 
-
-
-
 export const createUser = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
 
@@ -67,6 +64,7 @@ export const loginUser = asyncHandler(async (req, res) => {
     res.status(401);
     throw new Error("Invalid email or password");
   }
+  
 
   // ✅ create token and set cookie
   const token = createToken(res, user._id);
@@ -78,7 +76,7 @@ export const loginUser = asyncHandler(async (req, res) => {
     email: user.email,
     avatar: user.avatar,
     isAdmin: user.isAdmin,
-    token, // 👈 this is what frontend needs
+    token, 
     message: "Login successful",
   });
 });
@@ -207,4 +205,65 @@ export const updateUserById = asyncHandler(async (req, res) => {
     throw new Error("User not found");
   }
 });
+
+
+// @desc Get logged-in user's addresses
+export const getUserAddresses = async (req, res) => {
+  const user = await User.findById(req.user._id);
+  if (user) {
+    res.json(user.addresses || []);
+  } else {
+    res.status(404);
+    throw new Error("User not found");
+  }
+};
+
+// @desc Add new address
+export const addUserAddress = async (req, res) => {
+  const user = await User.findById(req.user._id);
+  if (user) {
+    const address = req.body;
+    user.addresses.push(address);
+    await user.save();
+    res.status(201).json(user.addresses);
+  } else {
+    res.status(404);
+    throw new Error("User not found");
+  }
+};
+
+// @desc Update address
+export const updateUserAddress = async (req, res) => {
+  const user = await User.findById(req.user._id);
+  if (user) {
+    const address = user.addresses.id(req.params.id);
+    if (address) {
+      Object.assign(address, req.body);
+      await user.save();
+      res.json(user.addresses);
+    } else {
+      res.status(404);
+      throw new Error("Address not found");
+    }
+  } else {
+    res.status(404);
+    throw new Error("User not found");
+  }
+};
+
+// @desc Delete address
+export const deleteUserAddress = async (req, res) => {
+  const user = await User.findById(req.user._id);
+  if (user) {
+    user.addresses = user.addresses.filter(
+      (addr) => addr._id.toString() !== req.params.id
+    );
+    await user.save();
+    res.json(user.addresses);
+  } else {
+    res.status(404);
+    throw new Error("User not found");
+  }
+};
+
 

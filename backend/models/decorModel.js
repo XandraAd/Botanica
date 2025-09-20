@@ -4,7 +4,7 @@ const decorSchema = mongoose.Schema(
   {
     name: { type: String, required: true },
     image: { type: String, required: true },
-    product: { type: mongoose.Schema.Types.ObjectId, ref: "Product" }, // optional link
+    product: { type: mongoose.Schema.Types.ObjectId, ref: "Product" }, 
   },
   { timestamps: true }
 );

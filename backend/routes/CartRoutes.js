@@ -218,6 +218,7 @@ router.get("/verify/:reference", async (req, res) => {
         success: true,
         message: "Payment verified, order updated & cart cleared",
         order,
+         cartItems: clearedCart.cartItems, 
       });
     } else {
       return res.status(400).json({ success: false, message: "Payment not successful" });

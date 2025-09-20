@@ -15,7 +15,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
-  const navigate = useNavigate();
+  const navigate = useNavigate()
   const location = useLocation();
   const dispatch = useDispatch();
 

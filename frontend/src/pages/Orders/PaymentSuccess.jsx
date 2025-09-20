@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
-import { clearCart } from "../../slices/cartSlice";
+import {  clearCartLocal,setCartItems } from "../../slices/cartSlice";
 
 const PaymentSuccess = () => {
   const [params] = useSearchParams();
@@ -10,6 +10,7 @@ const PaymentSuccess = () => {
   const dispatch = useDispatch();
   const reference = params.get("reference");
   const { userInfo } = useSelector((state) => state.auth);
+  console.log("userInfo in Redux:", userInfo);
 
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState(""); // 'success', 'error', 'processing'
@@ -41,19 +42,21 @@ const PaymentSuccess = () => {
         if (data.success) {
           setStatus("success");
           
-          // Clear the cart from Redux state
-          if (userInfo && userInfo._id) {
-            dispatch(clearCart(userInfo._id));
-          }
+          // ✅ Clear cart in Redux with backend response
+  if (data.cartItems) {
+       dispatch(setCartItems(data.cartItems));
+  } else {
+    dispatch(clearCartLocal()); // fallback for safety
+  }
 
           // Redirect to confirmation with order details
-          navigate("/order-confirmation", {
-            state: { 
-              order: data.order, 
-              message: data.message || "Payment successful!",
-              success: true 
-            },
-          });
+           navigate("/order-confirmation", {
+    state: { 
+      order: data.order, 
+      message: data.message || "Payment successful!",
+      success: true 
+    },
+  });
         } else {
           setStatus("error");
           navigate("/order-confirmation", {

@@ -18,3 +18,5 @@ export const UPLOAD_URL = `${API_URL}/upload`;
 export const ORDERS_URL = `${API_URL}/orders`;
 export const PAYPAL_URL = `${API_URL}/config/paypal`;
 export const DECOR_URL = `${API_URL}/decor`;
+// Addresses
+export const ADDRESSES_URL = `${API_URL}/addresses`;

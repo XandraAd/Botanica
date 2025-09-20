@@ -1,11 +1,11 @@
 import { apiSlice } from "./apiSlice";
-import { COLLECTION_URL } from "../store/constants";
+import { COLLECTION_URL, BASE_URL } from "../store/constants";
 
 export const collectionSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     createCollection: builder.mutation({
       query: (newCollection) => ({
-        url: COLLECTION_URL, // ✅ /api/collections
+        url: COLLECTION_URL,
         method: "POST",
         body: newCollection,
       }),
@@ -14,7 +14,7 @@ export const collectionSlice = apiSlice.injectEndpoints({
 
     updateCollection: builder.mutation({
       query: ({ collectionId, updatedCollection }) => ({
-        url: `${COLLECTION_URL}/${collectionId}`, // ✅ /api/collections/:id
+        url: `${COLLECTION_URL}/${collectionId}`,
         method: "PUT",
         body: updatedCollection,
       }),
@@ -23,15 +23,24 @@ export const collectionSlice = apiSlice.injectEndpoints({
 
     deleteCollection: builder.mutation({
       query: (collectionId) => ({
-        url: `${COLLECTION_URL}/${collectionId}`, // ✅ /api/collections/:id
+        url: `${COLLECTION_URL}/${collectionId}`,
         method: "DELETE",
       }),
       invalidatesTags: ["Collections"],
     }),
 
     fetchCollections: builder.query({
-      query: () => COLLECTION_URL, // ✅ /api/collections
+      query: () => COLLECTION_URL,
       providesTags: ["Collections"],
+ transformResponse: (response) =>
+  response.map((c) => ({
+    _id: c._id,
+    name: c.name || "Untitled Collection",
+    previewImage: c.previewImage || null, // use backend field
+    productsCount: c.count ?? c.products?.length ?? 0,
+  })),
+
+
     }),
   }),
 });

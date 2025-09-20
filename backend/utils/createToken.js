@@ -7,12 +7,13 @@ const createToken = (res, userId) => {
   });
 
   // set as cookie (optional if you want cookie auth)
-  res.cookie("jwt", token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge: 30 * 24 * 60 * 60 * 1000,
-  });
+res.cookie("jwt", token, {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production", // must be false on localhost
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // or "none" if redirect still drops cookie
+  maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+});
+
 
   return token; // 👈 return so frontend can use it
 };

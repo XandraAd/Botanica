@@ -18,6 +18,7 @@ import decorRoutes from "./routes/decorRoutes.js";
 import collectionRoutes from "./routes/collectionRoutes.js";
 import cartRoutes from "./routes/CartRoutes.js";
 import paymentRoutes from "./routes/PaymentRoutes.js"
+import addressRoutes from "./routes/addressRoutes.js"
 
 
 
@@ -28,9 +29,10 @@ const app = express();
 
 
 // Middleware
+
 app.use(cors({
-  origin: "http://localhost:5173", 
-  credentials: true
+  origin: process.env.CLIENT_URL || "http://localhost:5173", // frontend URL
+  credentials: true, // allow cookies
 }));
 
 connectDB();
@@ -51,7 +53,7 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/carousel", carouselRoutes);
 app.use("/api/collections",collectionRoutes);
 app.use("/api/cart",cartRoutes)
-
+app.use("/api/addresses",addressRoutes)
 app.use("/api/decor", decorRoutes);
 app.use("/api/payment",paymentRoutes)
 

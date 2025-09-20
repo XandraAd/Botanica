@@ -1,50 +1,18 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Mousewheel, Navigation } from "swiper/modules";
 import SectionHeader from "./SectionHeader";
 import CollectionCard from "./CollectionCard";
-import { BASE_URL } from "../store/constants";
+import { useFetchCollectionsQuery } from "../slices/collectionSlice";
 
 import "swiper/css";
 import "swiper/css/navigation";
 
 const ShopCollections = () => {
-  const [collections, setCollections] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  // ✅ Fetch collections via RTK Query
+  const { data: collections = [], isLoading, isError, error } = useFetchCollectionsQuery();
 
-  // ✅ Fetch collections from backend
-  useEffect(() => {
-    const fetchCollections = async () => {
-      try {
-    const res = await fetch("http://localhost:5000/api/collections");
-        if (!res.ok) throw new Error("Failed to fetch collections");
-
-        const data = await res.json();
-
-        // Transform if needed
-      const transformedCollections = data.map((c) => ({
-  _id: c._id,
-  name: c.name,
-  image: c.collectionImage || (c.images?.[0] ? `${BASE_URL}${c.images[0]}` : null),
-  productsCount: c.count || (c.products?.length ?? 0),
-}));
-
-
-        setCollections(transformedCollections);
-        setError(null);
-      } catch (err) {
-        console.error("Fetch error:", err);
-        setError("Failed to load collections");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCollections();
-  }, []);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <section className="w-full bg-lime-50 py-16">
         <div className="w-[95%] mx-auto px-6 sm:px-8 lg:px-12">
@@ -54,11 +22,11 @@ const ShopCollections = () => {
     );
   }
 
-  if (error) {
+  if (isError) {
     return (
       <section className="w-full bg-lime-50 py-16">
         <div className="w-[95%] mx-auto px-6 sm:px-8 lg:px-12">
-          <p className="text-red-500">{error}</p>
+          <p className="text-red-500">{error?.data?.message || "Failed to load collections"}</p>
         </div>
       </section>
     );
@@ -67,10 +35,7 @@ const ShopCollections = () => {
   return (
     <section className="w-full bg-lime-50 py-16">
       <div className="w-[95%] mx-auto px-6 sm:px-8 lg:px-12">
-        {/* Section header */}
-    
-          <SectionHeader sectionTitle="Shop by Collection" />
-     
+        <SectionHeader sectionTitle="Shop by Collection" />
 
         {/* Mobile grid */}
         <div className="grid grid-cols-1 gap-6 sm:hidden mt-6">

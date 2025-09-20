@@ -15,6 +15,10 @@ const collectionSchema = new mongoose.Schema(
     image: {
       type: String,
     },
+      previewImage: { // ✅ add this
+      type: String,
+      default: null,
+    },
     products: [
       {
         type: mongoose.Schema.Types.ObjectId,

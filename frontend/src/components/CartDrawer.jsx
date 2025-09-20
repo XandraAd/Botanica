@@ -5,7 +5,7 @@ import {
   updateCartItemQuantityApi,
 } from "../slices/cartSlice";
 import { FaTimes } from "react-icons/fa";
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 
 const CartDrawer = ({ isOpen, onClose }) => {
   const dispatch = useDispatch();

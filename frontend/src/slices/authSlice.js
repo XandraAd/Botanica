@@ -18,7 +18,8 @@ export const registerUser = createAsyncThunk(
         _id: data._id, 
         name: data.name, 
         email: data.email, 
-        isAdmin: data.isAdmin 
+        isAdmin: data.isAdmin ,
+        token:data.token,
       };
       localStorage.setItem("userInfo", JSON.stringify(userInfo));
       return userInfo;
@@ -47,7 +48,8 @@ export const loginUser = createAsyncThunk(
         _id: data._id, 
         name: data.name, 
         email: data.email, 
-        isAdmin: data.isAdmin 
+        isAdmin: data.isAdmin,
+        token:data.token,
       };
       localStorage.setItem("userInfo", JSON.stringify(userInfo));
       
@@ -80,6 +82,12 @@ export const logoutUser = createAsyncThunk(
 export const getCurrentUser = createAsyncThunk(
   "auth/getCurrentUser",
   async (_, thunkAPI) => {
+     const state = thunkAPI.getState();
+    const token = state.auth.userInfo?.token || JSON.parse(localStorage.getItem("userInfo"))?.token;
+
+    if (!token) {
+      return thunkAPI.rejectWithValue("No token found");
+    }
     try {
       const { data } = await axios.get("/api/users/profile", {
         withCredentials: true,
@@ -88,7 +96,8 @@ export const getCurrentUser = createAsyncThunk(
         _id: data._id, 
         name: data.name, 
         email: data.email, 
-        isAdmin: data.isAdmin 
+        isAdmin: data.isAdmin,
+        token,
       };
       localStorage.setItem("userInfo", JSON.stringify(userInfo));
       return userInfo;
@@ -118,10 +127,11 @@ const safeParse = (value) => {
 // ----------------------
 // Slice
 // ----------------------
+
 const authSlice = createSlice({
   name: "auth",
   initialState: {
-    userInfo: safeParse(localStorage.getItem("userInfo")),
+    userInfo: safeParse(localStorage.getItem("userInfo")) ||null,
     loading: false,
     error: null,
   },
@@ -132,10 +142,14 @@ const authSlice = createSlice({
     clearError: (state) => {
       state.error = null;
     },
-    // ADD THIS NEW ACTION to handle logout from other components
+   
     forceLogout: (state) => {
       state.userInfo = null;
       localStorage.removeItem("userInfo");
+    },
+      setCredentials: (state, action) => {
+      state.userInfo = action.payload;
+      localStorage.setItem("userInfo", JSON.stringify(action.payload));
     },
   },
   extraReducers: (builder) => {
@@ -165,6 +179,7 @@ const authSlice = createSlice({
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
         state.userInfo = action.payload;
+        localStorage.setItem("userInfo", JSON.stringify(action.payload));
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
@@ -177,6 +192,7 @@ const authSlice = createSlice({
       .addCase(logoutUser.fulfilled, (state) => {
         state.loading = false;
         state.userInfo = null;
+            localStorage.removeItem("userInfo");
       })
       .addCase(logoutUser.rejected, (state, action) => {
         state.loading = false;
@@ -199,5 +215,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { setUserFromStorage, clearError, forceLogout } = authSlice.actions;
+export const { setUserFromStorage, clearError, forceLogout,setCredentials } = authSlice.actions;
 export default authSlice.reducer;

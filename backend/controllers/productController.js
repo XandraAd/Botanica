@@ -5,19 +5,21 @@ import Product from "../models/productModel.js";
 import Collection from "../models/collectionModel.js";
 import Category from "../models/categoryModel.js"
 
-// Create Product with image
+
+
+// Create Product with images and update collections
 export const addProduct = asyncHandler(async (req, res) => {
   const {
     name,
     description,
     price,
     category,
-    collection,
+    collections, // ✅ array of collection IDs
     sizes,
     colors,
     images,
     inStock,
-    featured
+    featured,
   } = req.body;
 
   if (!images || images.length === 0) {
@@ -25,22 +27,48 @@ export const addProduct = asyncHandler(async (req, res) => {
     throw new Error("Product must have at least one image");
   }
 
+  if (!name || !price || !category) {
+    res.status(400);
+    throw new Error("Name, price, and category are required");
+  }
+
+  // Create the product
   const product = new Product({
-    name,
-    description,
-    price,
+    name: name.trim(),
+    description: description?.trim() || "",
+    price: Number(price),
     category,
-    collection,
-    sizes,
-    colors,
-    images,       
-    inStock,      
+    collections: collections || [],
+    sizes: sizes || [],
+    colors: colors || [],
+    images,
+    inStock: Boolean(inStock),
     featured: featured === "true" || featured === true,
   });
 
   const createdProduct = await product.save();
+
+  // Update collections in bulk
+  if (collections?.length) {
+    await Collection.updateMany(
+      { _id: { $in: collections } },
+      { 
+        $addToSet: { products: createdProduct._id }, // avoid duplicates
+      }
+    );
+
+    // Optionally, update the count for all collections
+    await Collection.updateMany(
+      { _id: { $in: collections } },
+      [
+        { $set: { count: { $size: "$products" } } } // MongoDB aggregation pipeline to recalc count
+      ]
+    );
+  }
+
   res.status(201).json(createdProduct);
 });
+
 
 
 
@@ -103,14 +131,16 @@ export const removeProduct = asyncHandler(async (req, res) => {
     throw new Error("Product not found");
   }
 
-  if (product.collection) {
-    const collection = await Collection.findById(product.collection);
+ if (product.collections?.length) {
+  for (const colId of product.collections) {
+    const collection = await Collection.findById(colId);
     if (collection) {
       collection.products.pull(product._id);
-      collection.count = collection.products.length; // ✅ update
+      collection.count = collection.products.length;
       await collection.save();
     }
   }
+}
 
   await product.deleteOne();
   res.json({ message: "Product deleted" });

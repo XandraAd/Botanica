@@ -6,7 +6,7 @@ const invoiceSchema = new mongoose.Schema({
   amount: { type: Number, required: true },
   currency: { type: String, default: "GHS" },
   reference: { type: String, unique: true, required: true },
-  status: { type: String, default: "unpaid" }, // unpaid, paid
+  status: { type: String, default: "unpaid" }, 
   cartItems: { type: Array, default: [] },
   paidAt: Date,
   paystackResponse: Object,

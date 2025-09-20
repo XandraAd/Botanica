@@ -1,10 +1,9 @@
 import React, { useEffect } from "react";
-import { Route, Routes, Navigate, Outlet } from "react-router-dom"; // Added Outlet import
+import { Route, Routes, Navigate, Outlet } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 
 import Home from "./pages/Home";
 import NavBar from "./components/NavBar";
-
 import Newest from "./pages/Products/Newest";
 import Plants from "./pages/Products/Plants";
 import ProductPage from "./pages/Products/ProductPage";
@@ -16,7 +15,7 @@ import Contact from "./pages/Contact";
 import About from "./pages/About";
 import Login from "./pages/Auth/Login";
 import SignUp from "./pages/Auth/SignUp";
-import Profile from "./pages/Profile";
+
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./pages/Admin/AdminRoute"; 
 import AdminDashboard from "./pages/Admin/AdminDashboard";
@@ -35,6 +34,8 @@ import OrderConfirmation from "./pages/Orders/OrderConfirmation";
 import { fetchCart } from "./slices/cartSlice";
 import { getCurrentUser } from "./slices/authSlice";
 import PaymentSuccess from "./pages/Orders/PaymentSuccess";
+import OrderDetails from "./pages/Orders/OrderDetails";
+import Profile from "./pages/User/UserProfile";
 
 function App() {
   const { userInfo } = useSelector((state) => state.auth);
@@ -42,9 +43,8 @@ function App() {
 
   useEffect(() => {
     dispatch(getCurrentUser());
-  }, [dispatch]);;
+  }, [dispatch]);
 
-    // ✅ fetch cart when userInfo changes
   useEffect(() => {
     if (userInfo?._id) {
       dispatch(fetchCart(userInfo._id));
@@ -54,7 +54,7 @@ function App() {
   return (
     <div className="app flex flex-col min-h-screen">
       <Routes>
-        {/* ---------- Public/Shop Routes ---------- */}
+        {/* ---------- Public Shop Routes ---------- */}
         <Route
           path="/"
           element={
@@ -73,20 +73,20 @@ function App() {
         >
           <Route index element={<Home />} />
           <Route path="collections" element={<CollectionsPage />} />
-          <Route path="/collections/:collectionId" element={<CollectionPage />} />
-<Route path="category/:slug" element={<CategoryPage />} />
-
+          <Route path="collections/:collectionId" element={<CollectionPage />} />
+          <Route path="category/:slug" element={<CategoryPage />} />
           <Route path="product/:id" element={<ProductPage />} />
           <Route path="new-arrivals" element={<Newest />} />
           <Route path="plants" element={<Plants />} />
           <Route path="contact" element={<Contact />} />
           <Route path="about" element={<About />} />
-          <Route path="product-details" element={<ProductDetails/>}/>
+          <Route path="product-details" element={<ProductDetails />} />
           <Route path="cart" element={<Cart />} />
-          <Route path="/order-confirmation" element={<OrderConfirmation />} />
-           <Route path="/payment-success" element={<PaymentSuccess />} />
-      
+          <Route path="order-confirmation" element={<OrderConfirmation />} />
+          <Route path="payment-success" element={<PaymentSuccess />} />
+          <Route path="order/:id" element={<OrderDetails />} />
 
+          {/* Auth */}
           <Route
             path="login"
             element={userInfo ? <Navigate to="/profile" replace /> : <Login />}
@@ -95,23 +95,12 @@ function App() {
             path="signup"
             element={userInfo ? <Navigate to="/profile" replace /> : <SignUp />}
           />
-          <Route
-            path="checkout"
-            element={
-              <ProtectedRoute>
-                <CheckoutPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="profile"
-            element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            }
-          />
-          
+
+          {/* Protected Routes */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="checkout" element={<CheckoutPage />} />
+            <Route path="profile" element={<Profile />} />
+          </Route>
         </Route>
 
         {/* ---------- Admin Routes ---------- */}
@@ -173,22 +162,24 @@ function App() {
             }
           />
           <Route
-            path="collectionList"
+            path="collectionlist"
             element={
               <AdminLayout>
                 <CollectionList />
               </AdminLayout>
             }
           />
-          <Route path="/admin/decor" element={
-             <AdminLayout>  <DecorList /></AdminLayout>
-          
-            } 
-            />
-
+          <Route
+            path="decor"
+            element={
+              <AdminLayout>
+                <DecorList />
+              </AdminLayout>
+            }
+          />
         </Route>
 
-        {/* 404 */}
+        {/* 404 fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>
