@@ -1,7 +1,9 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
-const API_URL = "http://localhost:5000/api/cart";
+import { API_URL as BASE_API_URL } from "../store/constants"; // adjust path
+const API_URL = `${BASE_API_URL}/cart`;
+
 
 // ---------- API THUNKS (for logged-in users) ----------
 export const fetchCart = createAsyncThunk("cart/fetch", async (userId) => {

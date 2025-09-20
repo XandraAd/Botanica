@@ -1,6 +1,10 @@
 // slices/authSlice.js
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
+import { API_URL } from "../store/constants";
+
+
+const USERS_URL = `${API_URL}/users`;
 
 // ----------------------
 // Thunks
@@ -11,7 +15,7 @@ export const registerUser = createAsyncThunk(
   "auth/register",
   async (userData, thunkAPI) => {
     try {
-      const { data } = await axios.post("/api/users", userData, {
+      const { data } = await axios.post(`${USERS_URL}`, userData, {
         withCredentials: true,
       });
       const userInfo = { 
@@ -40,7 +44,7 @@ export const loginUser = createAsyncThunk(
   "auth/login",
   async (credentials, thunkAPI) => {
     try {
-      const { data } = await axios.post("/api/users/auth", credentials, {
+      const { data } = await axios.post(`${USERS_URL}/auth`, credentials, {
         withCredentials: true,
       });
       
@@ -67,7 +71,7 @@ export const logoutUser = createAsyncThunk(
   "auth/logout",
   async (_, thunkAPI) => {
     try {
-      await axios.post("/api/users/logout", {}, { withCredentials: true });
+      await axios.post(`${USERS_URL}/logout`, {}, { withCredentials: true });
       localStorage.removeItem("userInfo");
       return null;
     } catch (error) {
@@ -89,7 +93,7 @@ export const getCurrentUser = createAsyncThunk(
       return thunkAPI.rejectWithValue("No token found");
     }
     try {
-      const { data } = await axios.get("/api/users/profile", {
+      const { data } = await axios.get(`${USERS_URL}/profile`, {
         withCredentials: true,
       });
       const userInfo = { 

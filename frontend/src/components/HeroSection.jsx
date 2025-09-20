@@ -3,6 +3,7 @@ import { Carousel } from "react-responsive-carousel";
 import "react-responsive-carousel/lib/styles/carousel.min.css";
 import axios from "axios";
 import { Link } from "react-router-dom";
+import { API_URL } from "../store/constants";
 
 /**
 
@@ -72,7 +73,8 @@ export default function HeroSection() {
   useEffect(() => {
     const fetchCarouselImages = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/carousel");
+       
+const response = await axios.get(`${API_URL}/carousel`);
         const raw = response.data;
         const arr = Array.isArray(raw)
           ? raw
