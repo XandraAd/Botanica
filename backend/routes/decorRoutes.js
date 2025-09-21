@@ -5,14 +5,16 @@ import { protect, admin } from "../middlewares/authMiddleware.js";
 const router = express.Router();
 
 // GET all decor items with populated product
+// routes/decorRoutes.js
 router.get("/", async (req, res) => {
   try {
     const decorItems = await Decor.find().populate("product", "_id name price");
-    res.json(decorItems);
+    res.json(Array.isArray(decorItems) ? decorItems : []); // force array
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
+
 
 // POST new decor item
 // POST new decor item

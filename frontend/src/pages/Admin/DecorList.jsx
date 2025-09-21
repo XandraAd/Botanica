@@ -112,34 +112,36 @@ const DecorList = () => {
         </button>
       </form>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        {Array.isArray(decorItems) && decorItems.length > 0 ? (
-          decorItems.map((decor) => (
-            <div key={decor._id} className="border p-2 rounded shadow">
-              <img
-                src={getImageUrl(decor.image)}
-                alt={decor.name}
-                className="w-full h-40 object-cover rounded"
-              />
-              <h3 className="mt-2 font-semibold">{decor.name}</h3>
-              {decor.product?.name ? (
-                <p className="text-sm text-gray-500">Product: {decor.product.name}</p>
-              ) : (
-                <p className="text-sm text-gray-400 italic">No linked product</p>
-              )}
+   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+  {Array.isArray(decorItems) && decorItems.length > 0 ? (
+    decorItems.map((decor) => (
+      <div key={decor._id} className="border p-2 rounded shadow">
+        <img
+          src={getImageUrl(decor.image)}
+          alt={decor.name}
+          className="w-full h-40 object-cover rounded"
+        />
+        <h3 className="mt-2 font-semibold">{decor.name}</h3>
 
-              <button
-                onClick={() => removeDecor(decor._id)}
-                className="bg-red-500 text-white px-3 py-1 rounded mt-2"
-              >
-                Delete
-              </button>
-            </div>
-          ))
+        {decor.product?.name ? (
+          <p className="text-sm text-gray-500">Product: {decor.product.name}</p>
         ) : (
-          <p className="text-center text-gray-500">No decor items found</p>
+          <p className="text-sm text-gray-400 italic">No linked product</p>
         )}
+
+        <button
+          onClick={() => removeDecor(decor._id)}
+          className="bg-red-500 text-white px-3 py-1 rounded mt-2"
+        >
+          Delete
+        </button>
       </div>
+    ))
+  ) : (
+    <p className="text-center text-gray-500">No decor items found</p>
+  )}
+</div>
+
     </div>
   );
 };
