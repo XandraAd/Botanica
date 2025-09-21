@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { FaTimes } from "react-icons/fa";
 import { useDispatch,useSelector } from "react-redux";
 import {addToCartApi } from "../slices/cartSlice";
+import { BASE_URL } from "../store/constants";
 
 const ProductDetailsModal = ({ product, onClose }) => {
   const dispatch = useDispatch();
@@ -11,14 +12,12 @@ const ProductDetailsModal = ({ product, onClose }) => {
   const [selectedColor, setSelectedColor] = useState(product.colors?.[0] || "");
 
   if (!product) return null;
-
-  const getImageUrl = (product) => {
-    if (product.arrivalImage) return `http://localhost:5000${product.arrivalImage}`;
-    if (product.collectionImage) return `http://localhost:5000${product.collectionImage}`;
-    if (product.images?.length > 0) return `http://localhost:5000${product.images[0]}`;
-    return "/fallback-image.jpg";
-  };
-
+const getImageUrl = (product) => {
+  if (product.arrivalImage) return `${BASE_URL}${product.arrivalImage}`;
+  if (product.collectionImage) return `${BASE_URL}${product.collectionImage}`;
+  if (product.images?.length > 0) return `${BASE_URL}${product.images[0]}`;
+  return "/fallback-image.jpg";
+};
 
   const handleAddToCart = () => {
     if (!userInfo?._id) {

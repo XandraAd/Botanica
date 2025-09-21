@@ -1,5 +1,6 @@
 // src/components/ProductImageCard.js
 import React from "react";
+import { BASE_URL } from "../store/constants";
 
 const ProductImageCard = ({ imgSrc, alt, imgHeight = "20rem", objectFit = "cover" }) => {
   return (
@@ -11,7 +12,7 @@ const ProductImageCard = ({ imgSrc, alt, imgHeight = "20rem", objectFit = "cover
         <img
           src={
             imgSrc
-              ? `http://localhost:5000${imgSrc}`
+              ? `${BASE_URL}${imgSrc}`
               : "/fallback-image.jpg"
           }
           alt={alt || "Product"}

@@ -6,6 +6,7 @@ import {
 } from "../slices/cartSlice";
 import { FaTimes } from "react-icons/fa";
 import { Link } from "react-router-dom";
+import { BASE_URL } from "../store/constants";
 
 const CartDrawer = ({ isOpen, onClose }) => {
   const dispatch = useDispatch();
@@ -23,7 +24,7 @@ const userInfo = useSelector((state) => state.auth.userInfo);
   const getImageUrl = (imagePath) => {
     if (!imagePath) return "/fallback-image.jpg";
     if (imagePath.startsWith("http")) return imagePath;
-    return `http://localhost:5000${imagePath}`;
+    return `${BASE_URL}${imagePath}`;
   };
 
   return (

@@ -5,6 +5,7 @@ import { Mousewheel, Navigation } from "swiper/modules";
 import SectionHeader from "./SectionHeader";
 import ProductCard from "./ProductCard";
 import ProductDetails from "./ProductDetails"; 
+import { PRODUCT_URL } from "../store/constants";
 
 import "swiper/css";
 import "swiper/css/navigation";
@@ -18,7 +19,7 @@ const Featured = () => {
  useEffect(() => {
   const fetchPlants = async () => {
     try {
-const res = await fetch("/api/products/featured");
+const res = await fetch(`${PRODUCT_URL}/featured`);
 
 
 

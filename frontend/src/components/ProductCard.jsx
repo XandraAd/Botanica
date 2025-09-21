@@ -5,6 +5,8 @@ import { FiShoppingBag } from "react-icons/fi";
 import { useDispatch, useSelector } from "react-redux";
 import { addToCartApi } from "../slices/cartSlice";
 import { toast } from "react-toastify";
+import { BASE_URL } from "../store/constants";
+
 
 const ProductCard = ({ product, variant, onView }) => {
   const dispatch = useDispatch();
@@ -68,7 +70,7 @@ const ProductCard = ({ product, variant, onView }) => {
 
   // ✅ Image resolver
   const getImageUrl = (product) => {
-    const base = "http://localhost:5000";
+   const base = BASE_URL;
     if (product.arrivalImage) return `${base}${product.arrivalImage}`;
     if (product.collectionImage) return `${base}${product.collectionImage}`;
     if (product.images?.length > 0) return `${base}${product.images[0]}`;
