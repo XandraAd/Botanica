@@ -3,6 +3,8 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import ProductCard from "../../components/ProductCard";
 import ProductDetailsModal from "../../components/ProductDetails";
+import PopupDiscount from "../../components/PopupDiscount";
+import { useSelector } from "react-redux";
 import { API_URL } from "../../store/constants";
 
 const Newest = () => {
@@ -116,6 +118,9 @@ const Newest = () => {
           onClose={() => setSelectedProduct(null)}
         />
       )}
+
+        {/* Popup */}
+      <PopupDiscount products={products} />
     </section>
   );
 };

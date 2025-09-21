@@ -94,16 +94,19 @@ const AllProducts = () => {
               >
                 <div className="flex flex-col md:flex-row">
                   <div className="md:w-1/4">
-                    <img
-                      src={
-                        product.images && product.images.length > 0
-                          ? `${BASE_URL}${product.images[0]}`
-                          : "/placeholder.png"
-                      }
-                      alt={product.name || "Unnamed Product"}
-                      className="w-full h-48 object-cover"
-                      onError={(e) => (e.target.src = "/placeholder.png")}
-                    />
+                 <img
+  src={
+    product.images && product.images.length > 0
+      ? product.images[0].startsWith("http")
+        ? product.images[0] // full URL from Cloudinary
+        : `${BASE_URL}${product.images[0]}` // local server URL
+      : "/placeholder.png"
+  }
+  alt={product.name || "Unnamed Product"}
+  className="w-full h-48 object-cover"
+  onError={(e) => (e.target.src = "/placeholder.png")}
+/>
+
                   </div>
                   <div className="p-6 md:w-3/4 flex flex-col justify-between">
                     <div className="mb-4">
