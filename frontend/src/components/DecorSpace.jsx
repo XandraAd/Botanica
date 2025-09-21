@@ -15,15 +15,16 @@ const DecorSpace = ({ collection }) => {
         />
 
         <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
-          {collection.product?._id && (
-            <Link
-              to={`/product/${collection.product._id}`}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-full shadow-lg hover:bg-green-700 transition"
-            >
-              <FiShoppingBag className="text-lg" />
-              <span>Quick Shop</span>
-            </Link>
-          )}
+        {collection.product?._id && (
+  <Link
+    to={`/product/${collection.product._id}`}
+    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-full shadow-lg hover:bg-green-700 transition"
+  >
+    <FiShoppingBag className="text-lg" />
+    <span>Quick Shop</span>
+  </Link>
+)}
+
         </div>
       </div>
 

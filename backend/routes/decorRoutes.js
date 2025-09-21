@@ -15,18 +15,24 @@ router.get("/", async (req, res) => {
 });
 
 // POST new decor item
+// POST new decor item
 router.post("/", protect, admin, async (req, res) => {
   try {
     const { name, image, product } = req.body;
+    if (!product) {
+      return res.status(400).json({ message: "Product is required for decor" });
+    }
+
     const decor = new Decor({ name, image, product });
     const createdDecor = await decor.save();
-    // Populate product before sending back
     await createdDecor.populate("product", "_id name price");
+
     res.status(201).json(createdDecor);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 });
+
 
 // DELETE a decor item
 router.delete("/:id", protect, admin, async (req, res) => {

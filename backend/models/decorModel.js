@@ -4,7 +4,8 @@ const decorSchema = mongoose.Schema(
   {
     name: { type: String, required: true },
     image: { type: String, required: true },
-    product: { type: mongoose.Schema.Types.ObjectId, ref: "Product" }, 
+ product: { type: mongoose.Schema.Types.ObjectId, ref: "Product", required: true },
+
   },
   { timestamps: true }
 );
