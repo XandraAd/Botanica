@@ -18,7 +18,6 @@ const DecorList = () => {
   const decorItems = Array.isArray(decorItemsRaw) ? decorItemsRaw : [];
 
   // Fetch all products for dropdown
-// ✅ Fix in useEffect
 useEffect(() => {
   const fetchProducts = async () => {
     try {
@@ -27,8 +26,13 @@ useEffect(() => {
       });
       console.log("Products API response:", data);
 
-      // ✅ always set as array
-      setProducts(Array.isArray(data) ? data : []);
+      if (Array.isArray(data)) {
+        setProducts(data);
+      } else if (data.products && Array.isArray(data.products)) {
+        setProducts(data.products);
+      } else {
+        setProducts([]);
+      }
     } catch (err) {
       console.error("Failed to fetch products:", err);
       setProducts([]);
