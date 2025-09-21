@@ -1,54 +1,42 @@
 import express from "express";
 import Decor from "../models/decorModel.js";
+import { protect, admin } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// @desc   Get all decor
-// @route  GET /api/decor
-// @access Public
+// GET all decor items with populated product
 router.get("/", async (req, res) => {
   try {
-    const decor = await Decor.find({});
-    res.json(decor);
-  } catch (error) {
-    console.error("Fetch decor error:", error.message);
-    res.status(500).json({ message: "Server error fetching decor" });
+    const decorItems = await Decor.find().populate("product", "_id name price");
+    res.json(decorItems);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 });
 
-// @desc   Create decor
-// @route  POST /api/decor
-
-router.post("/", async (req, res) => {
+// POST new decor item
+router.post("/", protect, admin, async (req, res) => {
   try {
-    const { name, image } = req.body;
-
-    if (!name || !image) {
-      return res.status(400).json({ message: "Name and image required" });
-    }
-
-    const decor = new Decor({ name, image });
+    const { name, image, product } = req.body;
+    const decor = new Decor({ name, image, product });
     const createdDecor = await decor.save();
+    // Populate product before sending back
+    await createdDecor.populate("product", "_id name price");
     res.status(201).json(createdDecor);
-  } catch (error) {
-    console.error("Create decor error:", error.message);
-    res.status(500).json({ message: "Server error creating decor" });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
   }
 });
 
-// @desc   Delete decor
-// @route  DELETE /api/decor/:id
-router.delete("/:id", async (req, res) => {
+// DELETE a decor item
+router.delete("/:id", protect, admin, async (req, res) => {
   try {
     const decor = await Decor.findById(req.params.id);
-    if (!decor) {
-      return res.status(404).json({ message: "Decor not found" });
-    }
-    await decor.deleteOne();
-    res.json({ message: "Decor deleted" });
-  } catch (error) {
-    console.error("Delete decor error:", error.message);
-    res.status(500).json({ message: "Server error deleting decor" });
+    if (!decor) return res.status(404).json({ message: "Decor item not found" });
+    await decor.remove();
+    res.json({ message: "Decor removed" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 });
 

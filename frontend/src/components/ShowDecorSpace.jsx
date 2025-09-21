@@ -1,32 +1,16 @@
-import React, { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { fetchDecor } from "../slices/decorSlice";
 import DecorSpace from "./DecorSpace";
-import { DECOR_URL } from "../store/constants";
 
 const ShowDecorSpace = () => {
-  const [decorItems, setDecorItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const dispatch = useDispatch();
+  const { items: decorItems, loading, error } = useSelector(state => state.decor);
 
-  useEffect(() => {
-  const fetchDecor = async () => {
-  try {
-    const res = await fetch(DECOR_URL);
-    if (!res.ok) throw new Error("Failed to fetch decor inspirations");
-    const data = await res.json();
-    console.log("Fetched decor:", data); // 👀 should be an array
-    setDecorItems(Array.isArray(data) ? data : []); // ✅ safeguard
-  } catch (err) {
-    setError(err.message);
-  } finally {
-    setLoading(false);
-  }
-};
+  useEffect(() => { dispatch(fetchDecor()); }, [dispatch]);
 
-    fetchDecor();
-  }, []);
-
-  if (loading) return <p className="text-center">Loading inspirations...</p>;
-  if (error) return <p className="text-center text-red-500">{error}</p>;
+  if (loading) return <p>Loading inspirations...</p>;
+  if (error) return <p className="text-red-500">{error}</p>;
 
   return (
     <section className="w-full bg-lime-50 py-16">
@@ -34,11 +18,8 @@ const ShowDecorSpace = () => {
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 text-center mb-10">
           Show us how you <span className="text-green-600">#BotanicaYourSpace</span>
         </h2>
-
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {decorItems.map((decor) => (
-            <DecorSpace key={decor._id} collection={decor} />
-          ))}
+          {decorItems.map(decor => <DecorSpace key={decor._id} collection={decor} />)}
         </div>
       </div>
     </section>
