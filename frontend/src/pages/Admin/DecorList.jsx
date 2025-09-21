@@ -62,12 +62,13 @@ const DecorList = () => {
     }
 
     try {
-      await axios.post(
+        const { data } = await axios.post(
         `${API_URL}/decor`,
         { name, image },
         { withCredentials: true }
       );
-      setDecorItems([...decorItems, { _id: Date.now(), name, image }]); // optimistic update
+    // Update UI with new decor item
+      setDecorItems([...decorItems, data]);
       setName("");
       setImage("");
       setError("");
