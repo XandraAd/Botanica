@@ -1,6 +1,6 @@
 import express from "express";
 import Decor from "../models/decorModel.js";
-import { protect, admin } from "../middleware/authMiddleware.js";
+import { protect, admin } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
