@@ -48,4 +48,16 @@ router.delete("/:id", protect, admin, async (req, res) => {
   }
 });
 
+
+//fetch data for a single product
+router.get("/product/:id", async (req, res) => {
+  try {
+    const decorItems = await Decor.find({ product: req.params.id }).populate("product", "_id name price images");
+    res.json(decorItems);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+
 export default router;
