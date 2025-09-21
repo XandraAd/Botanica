@@ -18,18 +18,22 @@ const DecorList = () => {
   const decorItems = Array.isArray(decorItemsRaw) ? decorItemsRaw : [];
 
   // Fetch all products for dropdown
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const { data } = await axios.get(`${API_URL}/products/all`, { withCredentials: true });
-        setProducts(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.error("Failed to fetch products:", err);
-        setProducts([]);
-      }
-    };
-    fetchProducts();
-  }, []);
+useEffect(() => {
+  const fetchProducts = async () => {
+    try {
+      const { data } = await axios.get(`${API_URL}/products`, {
+        withCredentials: true,
+      });
+      console.log("Fetched products:", data); // 👀 log what comes back
+      setProducts(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Failed to fetch products:", err);
+      setProducts([]);
+    }
+  };
+  fetchProducts();
+}, []);
+
 
   // Fetch decor items
   useEffect(() => {
@@ -56,16 +60,20 @@ const DecorList = () => {
       setUploading(false);
     }
   };
+const createDecor = (e) => {
+  e.preventDefault();
 
-  const createDecor = (e) => {
-    e.preventDefault();
-    if (!name || !image || !productId) return;
+  if (!name || !image || !productId) {
+    alert("Please fill all fields and select a product.");
+    return;
+  }
 
-    dispatch(addDecor({ name, image, product: productId }));
-    setName("");
-    setImage("");
-    setProductId("");
-  };
+  dispatch(addDecor({ name, image, product: productId }));
+  setName(""); 
+  setImage(""); 
+  setProductId("");
+};
+
 
   const removeDecor = (id) => dispatch(deleteDecor(id));
 
@@ -98,18 +106,23 @@ const DecorList = () => {
           />
         )}
 
-        <select
-          value={productId}
-          onChange={(e) => setProductId(e.target.value)}
-          className="border p-2 w-full"
-        >
-          <option value="">Select product for decor</option>
-          {products.map((p) => (
-            <option key={p._id} value={p._id}>
-              {p.name}
-            </option>
-          ))}
-        </select>
+       <select
+  value={productId}
+  onChange={(e) => setProductId(e.target.value)}
+  className="border p-2 w-full"
+>
+  <option value="">Select product for decor</option>
+  {products.length > 0 ? (
+    products.map((p) => (
+      <option key={p._id} value={p._id}>
+        {p.name}
+      </option>
+    ))
+  ) : (
+    <option disabled>No products available</option>
+  )}
+</select>
+
 
         <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded">
           Add Decor
