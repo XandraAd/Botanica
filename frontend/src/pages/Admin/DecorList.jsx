@@ -18,13 +18,16 @@ const DecorList = () => {
   const decorItems = Array.isArray(decorItemsRaw) ? decorItemsRaw : [];
 
   // Fetch all products for dropdown
+// ✅ Fix in useEffect
 useEffect(() => {
   const fetchProducts = async () => {
     try {
-      const { data } = await axios.get(`${API_URL}/products`, {
+      const { data } = await axios.get(`${API_URL}/products/allproducts`, {
         withCredentials: true,
       });
-      console.log("Fetched products:", data); // 👀 log what comes back
+      console.log("Products API response:", data);
+
+      // ✅ always set as array
       setProducts(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Failed to fetch products:", err);
@@ -33,6 +36,8 @@ useEffect(() => {
   };
   fetchProducts();
 }, []);
+
+
 
 
   // Fetch decor items
