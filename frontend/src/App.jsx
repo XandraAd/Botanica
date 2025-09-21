@@ -37,7 +37,7 @@ import OrderDetails from "./pages/Orders/OrderDetails";
 import Profile from "./pages/User/UserProfile";
 
 function App() {
-  const { userInfo,loading } = useSelector((state) => state.auth);
+  const { userInfo,loading:authLoading } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -50,11 +50,11 @@ function App() {
     }
   }, [dispatch, userInfo]);
 
-    if (loading) {
-    // Prevent routes from rendering until auth check is done
+  if (authLoading) {
+    // Render a loader until auth state is ready
     return (
-      <div className="flex justify-center items-center h-screen">
-        Loading...
+      <div className="flex items-center justify-center h-screen">
+        <p>Loading...</p>
       </div>
     );
   }
