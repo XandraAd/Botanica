@@ -37,7 +37,7 @@ import OrderDetails from "./pages/Orders/OrderDetails";
 import Profile from "./pages/User/UserProfile";
 
 function App() {
-  const { userInfo } = useSelector((state) => state.auth);
+  const { userInfo,loading } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -49,6 +49,15 @@ function App() {
       dispatch(fetchCart(userInfo._id));
     }
   }, [dispatch, userInfo]);
+
+    if (loading) {
+    // Prevent routes from rendering until auth check is done
+    return (
+      <div className="flex justify-center items-center h-screen">
+        Loading...
+      </div>
+    );
+  }
 
   return (
     <div className="app flex flex-col min-h-screen">
