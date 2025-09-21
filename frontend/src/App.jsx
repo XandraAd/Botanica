@@ -37,7 +37,7 @@ import OrderDetails from "./pages/Orders/OrderDetails";
 import Profile from "./pages/User/UserProfile";
 
 function App() {
-  const { userInfo,authLoading } = useSelector((state) => state.auth);
+  const { userInfo, authReady } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -50,8 +50,7 @@ function App() {
     }
   }, [dispatch, userInfo]);
 
-  if (!authLoading) {
-  
+  if (!authReady) {
     return (
       <div className="flex items-center justify-center h-screen">
         <p>Loading...</p>
@@ -86,7 +85,6 @@ function App() {
           <Route path="product/:id" element={<ProductPage />} />
           <Route path="new-arrivals" element={<Newest />} />
           <Route path="plants" element={<Plants />} />
-       
           <Route path="product-details" element={<ProductDetails />} />
           <Route path="cart" element={<Cart />} />
           <Route path="order-confirmation" element={<OrderConfirmation />} />
@@ -112,78 +110,15 @@ function App() {
 
         {/* ---------- Admin Routes ---------- */}
         <Route path="/admin" element={<AdminRoute />}>
-          <Route
-            path="dashboard"
-            element={
-              <AdminLayout>
-                <AdminDashboard />
-              </AdminLayout>
-            }
-          />
-          <Route
-            path="productlist"
-            element={
-              <AdminLayout>
-                <AdminProductList />
-              </AdminLayout>
-            }
-          />
-          <Route
-            path="allproductslist"
-            element={
-              <AdminLayout>
-                <AdminAllProducts />
-              </AdminLayout>
-            }
-          />
-          <Route
-            path="categorylist"
-            element={
-              <AdminLayout>
-                <AdminCategoryList />
-              </AdminLayout>
-            }
-          />
-          <Route
-            path="userlist"
-            element={
-              <AdminLayout>
-                <AdminUserList />
-              </AdminLayout>
-            }
-          />
-          <Route
-            path="orderlist"
-            element={
-              <AdminLayout>
-                <AdminOrderList />
-              </AdminLayout>
-            }
-          />
-          <Route
-            path="products"
-            element={
-              <AdminLayout>
-                <AdminProductList />
-              </AdminLayout>
-            }
-          />
-          <Route
-            path="collectionlist"
-            element={
-              <AdminLayout>
-                <CollectionList />
-              </AdminLayout>
-            }
-          />
-          <Route
-            path="decor"
-            element={
-              <AdminLayout>
-                <DecorList />
-              </AdminLayout>
-            }
-          />
+          <Route path="dashboard" element={<AdminLayout><AdminDashboard /></AdminLayout>} />
+          <Route path="productlist" element={<AdminLayout><AdminProductList /></AdminLayout>} />
+          <Route path="allproductslist" element={<AdminLayout><AdminAllProducts /></AdminLayout>} />
+          <Route path="categorylist" element={<AdminLayout><AdminCategoryList /></AdminLayout>} />
+          <Route path="userlist" element={<AdminLayout><AdminUserList /></AdminLayout>} />
+          <Route path="orderlist" element={<AdminLayout><AdminOrderList /></AdminLayout>} />
+          <Route path="products" element={<AdminLayout><AdminProductList /></AdminLayout>} />
+          <Route path="collectionlist" element={<AdminLayout><CollectionList /></AdminLayout>} />
+          <Route path="decor" element={<AdminLayout><DecorList /></AdminLayout>} />
         </Route>
 
         {/* 404 fallback */}
