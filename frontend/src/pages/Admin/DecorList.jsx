@@ -21,7 +21,7 @@ const DecorList = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const { data } = await axios.get(`${API_URL}/products`, { withCredentials: true });
+        const { data } = await axios.get(`${API_URL}/products/all`, { withCredentials: true });
         setProducts(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Failed to fetch products:", err);
