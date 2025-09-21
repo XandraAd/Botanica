@@ -1,12 +1,12 @@
-import React, { useState } from "react";
+import React from "react";
 import { FaPlay } from "react-icons/fa";
 import { IoClose } from "react-icons/io5";
 
 const UltimateGuide = () => {
-  const [isPlaying, setIsPlaying] = useState(false);
+
 
   return (
-    <section className="w-full border bg-lime-50 py-16">
+    <section className="w-full  bg-lime-50 py-16">
       <div className="w-[95%] mx-auto grid grid-cols-1 md:grid-cols-2 gap-10 items-center px-6 sm:px-8 lg:px-12">
         {/* Left: Content */}
         <div className="flex flex-col gap-6">
