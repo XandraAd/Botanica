@@ -137,6 +137,7 @@ const authSlice = createSlice({
   initialState: {
     userInfo: safeParse(localStorage.getItem("userInfo")) ||null,
     loading: false,
+     authReady: false,
     error: null,
   },
   reducers: {
@@ -210,11 +211,13 @@ const authSlice = createSlice({
       .addCase(getCurrentUser.fulfilled, (state, action) => {
         state.loading = false;
         state.userInfo = action.payload;
+         state.authReady = true;
       })
       .addCase(getCurrentUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
         state.userInfo = null; // This clears the state on auth failure
+        state.authReady = true;
       });
   },
 });

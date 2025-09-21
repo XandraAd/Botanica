@@ -37,7 +37,7 @@ import OrderDetails from "./pages/Orders/OrderDetails";
 import Profile from "./pages/User/UserProfile";
 
 function App() {
-  const { userInfo,loading:authLoading } = useSelector((state) => state.auth);
+  const { userInfo,authLoading } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -50,8 +50,8 @@ function App() {
     }
   }, [dispatch, userInfo]);
 
-  if (authLoading) {
-    // Render a loader until auth state is ready
+  if (!authLoading) {
+  
     return (
       <div className="flex items-center justify-center h-screen">
         <p>Loading...</p>
