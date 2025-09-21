@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
-import {  clearCartLocal,setCartItems } from "../../slices/cartSlice";
+import axios from "axios";
+import { clearCartLocal, setCartItems } from "../../slices/cartSlice";
+import { API_URL } from "../../store/constants";
 
 const PaymentSuccess = () => {
   const [params] = useSearchParams();
@@ -10,7 +11,6 @@ const PaymentSuccess = () => {
   const dispatch = useDispatch();
   const reference = params.get("reference");
   const { userInfo } = useSelector((state) => state.auth);
-  console.log("userInfo in Redux:", userInfo);
 
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState(""); // 'success', 'error', 'processing'
@@ -21,61 +21,58 @@ const PaymentSuccess = () => {
         setStatus("error");
         setLoading(false);
         navigate("/order-confirmation", {
-          state: { 
-            message: "No payment reference found",
-            success: false 
-          },
+          state: { message: "No payment reference found", success: false },
         });
         return;
       }
 
       try {
         console.log("Verifying payment with reference:", reference);
-        
-        const { data } = await axios.get(
-          `http://localhost:5000/api/payment/verify/${reference}`,
-          { withCredentials: true }
-        );
 
-        console.log("Payment verification successful:", data);
+        const { data } = await axios.get(`${API_URL}/payment/verify/${reference}`, {
+          withCredentials: true,
+        });
+
+        console.log("Payment verification result:", data);
 
         if (data.success) {
           setStatus("success");
-          
-          // ✅ Clear cart in Redux with backend response
-  if (data.cartItems) {
-       dispatch(setCartItems(data.cartItems));
-  } else {
-    dispatch(clearCartLocal()); // fallback for safety
-  }
+
+          // Update cart from backend or clear locally
+          if (data.cartItems) {
+            dispatch(setCartItems(data.cartItems));
+          } else {
+            dispatch(clearCartLocal());
+          }
 
           // Redirect to confirmation with order details
-           navigate("/order-confirmation", {
-    state: { 
-      order: data.order, 
-      message: data.message || "Payment successful!",
-      success: true 
-    },
-  });
+          navigate("/order-confirmation", {
+            state: {
+              order: data.order,
+              message: data.message || "Payment successful!",
+              success: true,
+            },
+          });
         } else {
           setStatus("error");
           navigate("/order-confirmation", {
-            state: { 
+            state: {
               message: data.message || "Payment verification failed",
-              success: false 
+              success: false,
             },
           });
         }
       } catch (err) {
         console.error("Verification failed - Full error:", err);
         setStatus("error");
-        
-        const errorMessage = err.response?.data?.error || err.response?.data?.message || err.message;
-        
+
+        const errorMessage =
+          err.response?.data?.message || err.response?.data?.error || err.message;
+
         navigate("/order-confirmation", {
-          state: { 
+          state: {
             message: `Payment verification failed: ${errorMessage}`,
-            success: false
+            success: false,
           },
         });
       } finally {
@@ -83,18 +80,7 @@ const PaymentSuccess = () => {
       }
     };
 
-    if (reference) {
-      verifyPayment();
-    } else {
-      setLoading(false);
-      setStatus("error");
-      navigate("/order-confirmation", {
-        state: { 
-          message: "No payment reference found in URL",
-          success: false 
-        },
-      });
-    }
+    verifyPayment();
   }, [reference, dispatch, navigate, userInfo]);
 
   return (

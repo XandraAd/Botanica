@@ -1,10 +1,7 @@
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import {
-  FaCheckCircle,
-  FaTimesCircle,
-  FaShoppingCart,
-} from "react-icons/fa";
+import { FaCheckCircle, FaTimesCircle, FaShoppingCart } from "react-icons/fa";
+import { BASE_URL } from "../../store/constants";
 
 const OrderConfirmation = () => {
   const location = useLocation();
@@ -12,9 +9,9 @@ const OrderConfirmation = () => {
   const { order, success = false } = location.state || {};
 
   const getImageUrl = (imagePath) => {
-    if (!imagePath) return "/fallback-image.jpg";
+    if (!imagePath) return "/fallback-image.jpg"; // fallback image
     if (imagePath.startsWith("http")) return imagePath;
-    return `http://localhost:5000${imagePath}`;
+    return `${BASE_URL}${imagePath}`;
   };
 
   return (
@@ -38,7 +35,6 @@ const OrderConfirmation = () => {
                 </h1>
               </>
             )}
-            
           </div>
 
           {/* Order summary */}
@@ -59,8 +55,7 @@ const OrderConfirmation = () => {
                     </span>
                   </p>
                   <p>
-                    <strong>Total:</strong> $
-                    {order.totalPrice?.toFixed(2)}
+                    <strong>Total:</strong> ${order.totalPrice?.toFixed(2)}
                   </p>
                   <p>
                     <strong>Payment:</strong> {order.paymentMethod}
@@ -82,19 +77,14 @@ const OrderConfirmation = () => {
                   </h3>
                   <ul className="divide-y divide-gray-200">
                     {order.orderItems.map((item, index) => (
-                      <li
-                        key={index}
-                        className="flex items-center py-3 gap-3"
-                      >
+                      <li key={index} className="flex items-center py-3 gap-3">
                         <img
                           src={getImageUrl(item.image)}
                           alt={item.name}
                           className="w-14 h-14 rounded-md object-cover border"
                         />
                         <div className="flex-1">
-                          <p className="font-medium text-gray-800">
-                            {item.name}
-                          </p>
+                          <p className="font-medium text-gray-800">{item.name}</p>
                           <p className="text-sm text-gray-500">
                             Qty: {item.qty} × ${item.price}
                           </p>
@@ -120,19 +110,18 @@ const OrderConfirmation = () => {
               Continue Shopping
             </button>
 
-         {order && (
-  <button
-    onClick={() =>
-      navigate(`/order/${order._id}`, {
-        state: { fromConfirmation: true }, // 👈 pass flag
-      })
-    }
-    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
-  >
-    View Full Order
-  </button>
-)}
-
+            {order && (
+              <button
+                onClick={() =>
+                  navigate(`/order/${order._id}`, {
+                    state: { fromConfirmation: true }, // pass flag
+                  })
+                }
+                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+              >
+                View Full Order
+              </button>
+            )}
           </div>
         </div>
       </div>
