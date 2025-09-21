@@ -7,8 +7,9 @@ const DecorList = () => {
   const [name, setName] = useState("");
   const [image, setImage] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState("");
 
-  // Fetch decor items on mount
+  // Fetch decor items
   useEffect(() => {
     const fetchDecor = async () => {
       try {
@@ -16,27 +17,37 @@ const DecorList = () => {
         setDecorItems(data);
       } catch (err) {
         console.error("Failed to fetch decor:", err);
+        setError("Failed to load decor items.");
       }
     };
     fetchDecor();
   }, []);
 
-  // Upload image handler
+  // Upload image to backend/Cloudinary
   const uploadFileHandler = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
     const formData = new FormData();
     formData.append("image", file);
 
     setUploading(true);
+    setError("");
+
     try {
       const { data } = await axios.post(UPLOAD_URL, formData, {
         headers: { "Content-Type": "multipart/form-data" },
         withCredentials: true,
       });
-      setImage(data.image); // backend returns `/uploads/...` path
+
+      // Cloudinary sends either `url` or `image` depending on backend
+      const uploadedImage = data.url || data.image;
+      if (!uploadedImage) throw new Error("Invalid upload response");
+
+      setImage(uploadedImage);
     } catch (err) {
-      console.error("Image upload failed:", err);
+      console.error("Upload failed:", err);
+      setError("Image upload failed. Try again.");
     } finally {
       setUploading(false);
     }
@@ -45,54 +56,61 @@ const DecorList = () => {
   // Create new decor
   const createDecor = async (e) => {
     e.preventDefault();
-    if (!name || !image) return;
+    if (!name || !image) {
+      setError("Please provide a name and image.");
+      return;
+    }
 
     try {
-      const { data } = await axios.post(
+      await axios.post(
         `${API_URL}/decor`,
         { name, image },
         { withCredentials: true }
       );
-      setDecorItems((prev) => [...prev, data]);
+      setDecorItems([...decorItems, { _id: Date.now(), name, image }]); // optimistic update
       setName("");
       setImage("");
+      setError("");
     } catch (err) {
       console.error("Failed to create decor:", err);
+      setError("Failed to add decor. Try again.");
     }
   };
 
-  // Delete decor item
+  // Delete decor
   const deleteDecor = async (id) => {
     try {
       await axios.delete(`${API_URL}/decor/${id}`, { withCredentials: true });
-      setDecorItems((prev) => prev.filter((d) => d._id !== id));
+      setDecorItems(decorItems.filter((d) => d._id !== id));
     } catch (err) {
       console.error("Failed to delete decor:", err);
+      setError("Failed to delete decor. Try again.");
     }
   };
 
-  // Resolve image URLs for dev & prod
-  const getImageUrl = (img) => {
-    if (!img) return "/fallback-image.jpg";
-    if (img.startsWith("http")) return img;
-    return `${BASE_URL}${img}`;
+  // Generate image URL for dev/prod
+  const getImageUrl = (imgPath) => {
+    if (!imgPath) return "/fallback-image.jpg";
+    return imgPath.startsWith("http") ? imgPath : `${BASE_URL}${imgPath}`;
   };
 
   return (
     <div className="p-4">
       <h2 className="text-xl font-bold mb-4">Decor Inspirations</h2>
 
-      {/* Add Decor Form */}
+      {error && <p className="text-red-600 mb-4">{error}</p>}
+
+      {/* Add new decor */}
       <form onSubmit={createDecor} className="mb-6 space-y-4">
         <input
           type="text"
           placeholder="Decor name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="border p-2 w-full rounded"
+          className="border p-2 w-full"
         />
 
-        <input type="file" onChange={uploadFileHandler} className="border p-2 rounded" />
+        <input type="file" onChange={uploadFileHandler} className="border p-2" />
         {uploading && <p className="text-sm text-gray-500">Uploading...</p>}
 
         {image && (
@@ -108,7 +126,7 @@ const DecorList = () => {
         </button>
       </form>
 
-      {/* Decor Items Grid */}
+      {/* Decor list */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {decorItems.map((decor) => (
           <div key={decor._id} className="border p-2 rounded shadow">
