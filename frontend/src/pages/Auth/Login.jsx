@@ -72,8 +72,8 @@ export default function Login() {
       }
 
       // Fetch user data and cart
-      await dispatch(getCurrentUser());
-      await dispatch(fetchCart(res.data._id));
+      dispatch(getCurrentUser());
+      dispatch(fetchCart(res.data._id));
 
       setMessageType("success");
       setMessage("Login successful! Redirecting...");

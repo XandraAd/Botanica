@@ -95,18 +95,17 @@ const DecorList = () => {
       </form>
 
       {/* Decor items */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        {decorItems.map((decor) => (
-          <div key={decor._id} className="border p-2 rounded shadow">
-            <img src={getImageUrl(decor.image)} alt={decor.name} className="w-full h-40 object-cover rounded" />
-            <h3 className="mt-2 font-semibold">{decor.name}</h3>
-            {decor.product?._id && (
-              <p className="text-sm text-gray-500">Linked Product: {decor.product.name}</p>
-            )}
-            <button onClick={() => removeDecor(decor._id)} className="bg-red-500 text-white px-3 py-1 rounded mt-2">Delete</button>
-          </div>
-        ))}
-      </div>
+   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+  {(Array.isArray(decorItems) ? decorItems : []).map((decor) => (
+    <div key={decor._id} className="border p-2 rounded shadow">
+      <img src={getImageUrl(decor.image)} alt={decor.name} className="w-full h-40 object-cover rounded" />
+      <h3 className="mt-2 font-semibold">{decor.name}</h3>
+      {decor.product?._id && <p className="text-sm text-gray-500">Linked Product: {decor.product.name}</p>}
+      <button onClick={() => removeDecor(decor._id)} className="bg-red-500 text-white px-3 py-1 rounded mt-2">Delete</button>
+    </div>
+  ))}
+</div>
+
     </div>
   );
 };
