@@ -11,8 +11,7 @@ import Footer from "./components/Footer";
 import CollectionPage from "./pages/Products/CollectionPage";
 import CollectionsPage from "./pages/Products/CollectionsPage";
 import CategoryPage from "./pages/Products/CategoryPage";
-import Contact from "./pages/Contact";
-import About from "./pages/About";
+
 import Login from "./pages/Auth/Login";
 import SignUp from "./pages/Auth/SignUp";
 
@@ -78,8 +77,7 @@ function App() {
           <Route path="product/:id" element={<ProductPage />} />
           <Route path="new-arrivals" element={<Newest />} />
           <Route path="plants" element={<Plants />} />
-          <Route path="contact" element={<Contact />} />
-          <Route path="about" element={<About />} />
+       
           <Route path="product-details" element={<ProductDetails />} />
           <Route path="cart" element={<Cart />} />
           <Route path="order-confirmation" element={<OrderConfirmation />} />

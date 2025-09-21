@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import AddressForm from './Orders/AddressForm';
 import { useAddAddressMutation } from '../slices/UsersSlice'; 
 import { toast } from 'react-toastify';
-
+import { ORDERS_URL, ADDRESSES_URL, API_URL } from '../store/constants';
 
 const CheckoutPage = () => {
   const [hasCoupon, setHasCoupon] = useState(false);
@@ -35,7 +35,6 @@ const CheckoutPage = () => {
   const navigate = useNavigate();
   const [addAddress] = useAddAddressMutation();
 
-
   const subtotal = cartItems.reduce(
     (acc, item) => acc + Number(item.price) * item.quantity,
     0
@@ -44,27 +43,17 @@ const CheckoutPage = () => {
   const total = subtotal + shipping;
 
   useEffect(() => {
-    if (!userInfo) {
-      setError('Please log in to place an order.');
-    } else {
-      setError('');
-    }
+    if (!userInfo) setError('Please log in to place an order.');
+    else setError('');
   }, [userInfo]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === 'checkbox' ? checked : value,
-    });
+    setFormData({ ...formData, [name]: type === 'checkbox' ? checked : value });
   };
 
   const validateForm = () => {
-    const requiredFields = [
-      'FirstName', 'LastName', 'StreetAddress', 
-      'City', 'ZipCode', 'Email', 'Phone'
-    ];
-
+    const requiredFields = ['FirstName', 'LastName', 'StreetAddress', 'City', 'ZipCode', 'Email', 'Phone'];
     const missingFields = requiredFields.filter(field => !formData[field]);
     if (missingFields.length > 0) {
       setError(`Please fill in all required fields: ${missingFields.join(', ')}`);
@@ -76,25 +65,25 @@ const CheckoutPage = () => {
     }
     return true;
   };
-const handleSaveAddress = async (formData) => {
-  try {
-    await addAddress({
-      fullName: `${formData.FirstName} ${formData.LastName}`,
-      phone: formData.Phone,
-      street: formData.StreetAddress,
-      city: formData.City,
-      country: formData.Country,
-      postalCode: formData.ZipCode,
-      isDefault: true, // optional
-    }).unwrap();
 
-    toast.success("✅ Address saved successfully!");
-  } catch (err) {
-    toast.error("❌ Failed to save address");
-    console.error("Failed to save address:", err);
-  }
-};
+  const handleSaveAddress = async (formData) => {
+    try {
+      await addAddress({
+        fullName: `${formData.FirstName} ${formData.LastName}`,
+        phone: formData.Phone,
+        street: formData.StreetAddress,
+        city: formData.City,
+        country: formData.Country,
+        postalCode: formData.ZipCode,
+        isDefault: true,
+      }).unwrap();
 
+      toast.success("✅ Address saved successfully!");
+    } catch (err) {
+      toast.error("❌ Failed to save address");
+      console.error("Failed to save address:", err);
+    }
+  };
 
   const handlePlaceOrder = async () => {
     if (!userInfo) {
@@ -102,90 +91,64 @@ const handleSaveAddress = async (formData) => {
       navigate("/login");
       return;
     }
-
     if (cartItems.length === 0) {
       setError("Your cart is empty.");
       return;
     }
-
     if (!validateForm()) return;
 
     setLoading(true);
     setError("");
 
     try {
+      const orderPayload = {
+        orderItems: cartItems.map(item => ({
+          _id: item._id,
+          name: item.name,
+          qty: item.quantity,
+          image: item.images[0] || item.image,
+          price: item.price,
+          size: item.size,
+          product: item._id,
+        })),
+        shippingAddress: {
+          address: formData.StreetAddress,
+          city: formData.City,
+          postalCode: formData.ZipCode,
+          country: formData.Country,
+          firstName: formData.FirstName,
+          lastName: formData.LastName,
+          email: formData.Email,
+          phone: formData.Phone,
+          state: formData.State,
+        },
+        paymentMethod: formData.paymentMethod,
+        itemsPrice: subtotal,
+        shippingPrice: shipping,
+        totalPrice: total,
+      };
+
       if (formData.paymentMethod === "paystack") {
-        // ✅ Initialize Paystack via backend
+        // Paystack initialization via backend
         const { data } = await axios.post(
-          "http://localhost:5000/api/payment/initialize",
+          `${API_URL}/payment/initialize`,
           {
-            email: formData.Email,
-            amount: total, // USD amount
+            ...orderPayload,
             reference: `ref-${Date.now()}`,
-            orderItems: cartItems.map((item) => ({
-              _id: item._id,
-              name: item.name,
-              qty: item.quantity,
-              image: item.images[0],
-              price: item.price,
-              size: item.size,
-              product: item._id,
-            })),
-            shippingAddress: {
-              address: formData.StreetAddress,
-              city: formData.City,
-              postalCode: formData.ZipCode,
-              country: formData.Country,
-              firstName: formData.FirstName,
-              lastName: formData.LastName,
-              email: formData.Email,
-              phone: formData.Phone,
-              state: formData.State,
-            },
           },
           { withCredentials: true }
         );
 
-        // Show GHS total for reference
         setGhsTotal(data.amountInGhs);
-
-        // Redirect user to Paystack payment page
-        window.location.href = data.authUrl;
-
+        window.location.href = data.authUrl; // redirect to Paystack
       } else {
-        // ✅ Normal order creation (Card / COD)
+        // Card or COD orders
         const { data } = await axios.post(
-          "http://localhost:5000/api/orders",
-          {
-            orderItems: cartItems.map((item) => ({
-              _id: item._id,
-              name: item.name,
-              qty: item.quantity,
-              image: item.images[0],
-              price: item.price,
-              size: item.size,
-              product: item._id,
-            })),
-            shippingAddress: {
-              address: formData.StreetAddress,
-              city: formData.City,
-              postalCode: formData.ZipCode,
-              country: formData.Country,
-              firstName: formData.FirstName,
-              lastName: formData.LastName,
-              email: formData.Email,
-              phone: formData.Phone,
-              state: formData.State,
-            },
-            paymentMethod: formData.paymentMethod,
-            itemsPrice: subtotal,
-            shippingPrice: shipping,
-            totalPrice: total,
-          },
+          ORDERS_URL,
+          orderPayload,
           { headers: { "Content-Type": "application/json" }, withCredentials: true }
         );
-
-        alert("Order placed successfully!");
+        toast.success("✅ Order placed successfully!");
         navigate("/order-confirmation", { state: { order: data } });
       }
     } catch (err) {
@@ -198,7 +161,7 @@ const handleSaveAddress = async (formData) => {
 
   const handleCouponSubmit = (e) => {
     e.preventDefault();
-    alert(`Coupon code applied: ${couponCode}`);
+    toast.info(`Coupon code applied: ${couponCode}`);
   };
 
   return (
@@ -234,7 +197,7 @@ const handleSaveAddress = async (formData) => {
             </div>
 
             {/* Billing Details */}
-            <AddressForm formData={formData} onChange={handleInputChange} mode='order'onSubmit={handleSaveAddress} />
+            <AddressForm formData={formData} onChange={handleInputChange} mode='order' onSubmit={handleSaveAddress} />
 
             {/* Ship to different */}
             <div className="bg-white p-6 rounded-lg shadow-md mt-6">
@@ -276,9 +239,7 @@ const handleSaveAddress = async (formData) => {
               {/* Total */}
               <div className="flex justify-between items-center font-bold text-lg text-gray-900 mb-6">
                 <span>Total</span>
-                <span>
-                  ${total.toFixed(2)} {ghsTotal && `(~GHS ${ghsTotal.toFixed(2)})`}
-                </span>
+                <span>${total.toFixed(2)} {ghsTotal && `(~GHS ${ghsTotal.toFixed(2)})`}</span>
               </div>
 
               {/* Payment Methods */}

@@ -5,10 +5,8 @@ import { FaEye, FaEyeSlash, FaEnvelope, FaLock, FaSignInAlt } from "react-icons/
 import { ImSpinner8 } from "react-icons/im";
 import { useDispatch } from "react-redux";
 import { getCurrentUser } from "../../slices/authSlice";
-import { fetchCart } from "../../slices/cartSlice"; 
+import { fetchCart } from "../../slices/cartSlice";
 import { API_URL } from "../../store/constants";
-
-
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -17,11 +15,11 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
 
-  // Get redirect path from location state
+  // Redirect path
   const from = location.state?.from?.pathname || "/";
 
   useEffect(() => {
@@ -36,72 +34,62 @@ export default function Login() {
 
   const validateForm = () => {
     const newErrors = {};
-    if (!form.email) {
-      newErrors.email = "Email is required";
-    } else if (!/\S+@\S+\.\S+/.test(form.email)) {
-      newErrors.email = "Email is invalid";
-    }
-    if (!form.password) {
-      newErrors.password = "Password is required";
-    } else if (form.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
-    }
+    if (!form.email) newErrors.email = "Email is required";
+    else if (!/\S+@\S+\.\S+/.test(form.email)) newErrors.email = "Email is invalid";
+    if (!form.password) newErrors.password = "Password is required";
+    else if (form.password.length < 6) newErrors.password = "Password must be at least 6 characters";
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }));
+    setForm(prev => ({ ...prev, [name]: value }));
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: "" }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
+    setLoading(true);
+    setMessage("");
+    setMessageType("");
+
+    try {
+      const res = await axios.post(`${API_URL}/users/auth`, form, {
+        headers: { "Content-Type": "application/json" },
+        withCredentials: true,
+      });
+
+      // Save user info to localStorage
+      localStorage.setItem("userInfo", JSON.stringify(res.data));
+
+      // Attach token for future requests
+      if (res.data.token) {
+        axios.defaults.headers.common["Authorization"] = `Bearer ${res.data.token}`;
+      }
+
+      // Fetch user data and cart
+      await dispatch(getCurrentUser());
+      await dispatch(fetchCart(res.data._id));
+
+      setMessageType("success");
+      setMessage("Login successful! Redirecting...");
+
+      setTimeout(() => {
+        navigate(from, { replace: true });
+      }, 1500);
+    } catch (err) {
+      setMessageType("error");
+      setMessage(err.response?.data?.message || "Login failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (!validateForm()) return;
-
-  setLoading(true);
-  setMessage("");
-  setMessageType("");
-
-  try {
-    const res = await axios.post(`${API_URL}/users/auth`, form);
-
-    // ✅ Save user info in localStorage
-    localStorage.setItem("userInfo", JSON.stringify(res.data));
-
-
-
-    // ✅ Attach token to axios globally
-    if (res.data.token) {
-      axios.defaults.headers.common["Authorization"] = `Bearer ${res.data.token}`;
-    }
-
-  await dispatch(getCurrentUser());
-await dispatch(fetchCart(res.data._id));
-
- 
-
-    setMessageType("success");
-    setMessage("Login successful! Redirecting...");
-
-    setTimeout(() => {
-      navigate(from, { replace: true });
-    }, 1500);
-  } catch (err) {
-    setMessageType("error");
-    setMessage(err.response?.data?.error || "Login failed. Please try again.");
-  } finally {
-    setLoading(false);
-  }
-};
-
-
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
+  const togglePasswordVisibility = () => setShowPassword(!showPassword);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
@@ -205,7 +193,6 @@ await dispatch(fetchCart(res.data._id));
                   Remember me
                 </label>
               </div>
-
               <Link
                 to="/forgot-password"
                 className="text-sm text-blue-600 hover:text-blue-500 transition-colors"
