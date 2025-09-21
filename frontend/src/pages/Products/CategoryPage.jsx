@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import ProductCard from "../../components/ProductCard";
+import { PRODUCT_URL } from "../../store/constants";
 
 const CategoryPage = () => {
   const { slug } = useParams();
@@ -13,19 +14,26 @@ const CategoryPage = () => {
   useEffect(() => {
     const fetchCategoryProducts = async () => {
       try {
-        const { data } = await axios.get(`/api/products/category/${slug}`);
+       const { data } = await axios.get(`${PRODUCT_URL}/category/${slug}`);
         setProducts(data.products || []);
-      } catch (err) {
-        setError("Failed to load products");
-      } finally {
+      }catch (err) {
+  setError(err.response?.data?.message || "Failed to load products");
+}
+finally {
         setLoading(false);
       }
     };
 
     fetchCategoryProducts();
   }, [slug]);
+  
+if (loading)
+  return (
+    <div className="flex justify-center py-12">
+      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-green-600"></div>
+    </div>
+  );
 
-  if (loading) return <p>Loading {slug}...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
 
   return (
