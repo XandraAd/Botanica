@@ -26,17 +26,29 @@ connectDB();
 const app = express();
 
 
-const allowedOrigin =
-  process.env.NODE_ENV === "production"
-    ? process.env.CLIENT_URL // Render frontend
-    : "http://localhost:5173"; // Local frontend
+
+// CORS setup
+const allowedOrigins = process.env.NODE_ENV === "production"
+  ? [process.env.CLIENT_URL, "https://www.botanica-frontend.onrender.com"] // add any frontend domains
+  : ["http://localhost:5173"]; // local dev frontend
 
 app.use(
   cors({
-    origin: allowedOrigin,
+    origin: function (origin, callback) {
+      // allow requests with no origin (like mobile apps or curl)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        return callback(new Error("CORS policy: This origin is not allowed"));
+      }
+    },
     credentials: true,
   })
 );
+
+
+
 
 
 
