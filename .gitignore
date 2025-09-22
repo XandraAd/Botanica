@@ -9,10 +9,13 @@ pnpm-debug.log*
 # Dependencies
 node_modules/
 
-# Environment variables
-.env*
+# Environment variables (ignore ALL env files, both root, frontend, and backend)
+*.env
+*.env.*
 backend/.env
-frontend/.env*
+backend/.env.*
+frontend/.env
+frontend/.env.*
 
 # Build / output
 dist/
