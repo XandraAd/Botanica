@@ -11,7 +11,7 @@ import Footer from "./components/Footer";
 import CollectionPage from "./pages/Products/CollectionPage";
 import CollectionsPage from "./pages/Products/CollectionsPage";
 import CategoryPage from "./pages/Products/CategoryPage";
-
+import SingleProductPage from "./pages/Products/SingleProductPage";
 import Login from "./pages/Auth/Login";
 import SignUp from "./pages/Auth/SignUp";
 
@@ -35,6 +35,7 @@ import { getCurrentUser } from "./slices/authSlice";
 import PaymentSuccess from "./pages/Orders/PaymentSuccess";
 import OrderDetails from "./pages/Orders/OrderDetails";
 import Profile from "./pages/User/UserProfile";
+import SingleUserOrderPage from "./pages/User/SingleUserOrderPage";
 
 function App() {
   const { userInfo, authReady } = useSelector((state) => state.auth);
@@ -90,6 +91,10 @@ function App() {
           <Route path="order-confirmation" element={<OrderConfirmation />} />
           <Route path="payment-success" element={<PaymentSuccess />} />
           <Route path="order/:id" element={<OrderDetails />} />
+          <Route path="product-quick/:id" element={<SingleProductPage />} />
+          <Route path="/orders/:id" element={<SingleUserOrderPage userInfo={userInfo} />} />
+
+
 
           {/* Auth */}
           <Route

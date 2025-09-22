@@ -1,12 +1,11 @@
 import React from "react";
-import { FaHeart, FaRegEye } from "react-icons/fa";
+import { FaHeart, FaRegEye, FaStar } from "react-icons/fa";
 import { IoMdShuffle } from "react-icons/io";
 import { FiShoppingBag } from "react-icons/fi";
 import { useDispatch, useSelector } from "react-redux";
 import { addToCartApi } from "../slices/cartSlice";
 import { toast } from "react-toastify";
 import { BASE_URL } from "../store/constants";
-
 
 const ProductCard = ({ product, variant, onView }) => {
   const dispatch = useDispatch();
@@ -68,14 +67,37 @@ const ProductCard = ({ product, variant, onView }) => {
     }
   };
 
-  // ✅ Image resolver
+  // ✅ Image resolver - fixed to handle all cases properly
   const getImageUrl = (product) => {
-   const base = BASE_URL;
+    if (!product) return "/fallback-image.jpg";
+    
+    // Handle case where image might already be a full URL
+    if (product.arrivalImage && product.arrivalImage.startsWith('http')) {
+      return product.arrivalImage;
+    }
+    if (product.collectionImage && product.collectionImage.startsWith('http')) {
+      return product.collectionImage;
+    }
+    if (product.images?.length > 0 && product.images[0].startsWith('http')) {
+      return product.images[0];
+    }
+    
+    // Handle relative paths by prepending BASE_URL
+    const base = BASE_URL || '';
     if (product.arrivalImage) return `${base}${product.arrivalImage}`;
     if (product.collectionImage) return `${base}${product.collectionImage}`;
     if (product.images?.length > 0) return `${base}${product.images[0]}`;
+    
     return "/fallback-image.jpg";
   };
+
+// Calculate rating & numReviews from reviews array
+const numReviews = product.reviews?.length || 0;
+const rating =
+  numReviews > 0
+    ? product.reviews.reduce((acc, r) => acc + (r.rating || 0), 0) / numReviews
+    : 0;
+
 
   return (
     <div
@@ -138,9 +160,33 @@ const ProductCard = ({ product, variant, onView }) => {
         <h3 className="font-semibold text-base sm:text-lg truncate">
           {product.name}
         </h3>
+
         {product.collection && (
           <p className="text-gray-600 text-sm">{product.collection}</p>
         )}
+
+        {/* Rating summary - fixed logic */}
+        {rating > 0 && (
+         <div className="flex items-center text-sm">
+  {Array.from({ length: 5 }).map((_, index) => (
+    <FaStar
+      key={index}
+      size={14}
+      className={
+        index < Math.round(rating)
+          ? "text-yellow-500"
+          : "text-gray-300"
+      }
+    />
+  ))}
+  <span className="ml-2 text-gray-600 text-xs">
+    {numReviews > 0 ? `(${numReviews})` : "No reviews"}
+  </span>
+</div>
+
+        )}
+
+        {/* Price */}
         <div className="flex justify-between items-center mt-3">
           <span className="font-bold text-lg">
             ${product.price ? product.price.toFixed(2) : "N/A"}

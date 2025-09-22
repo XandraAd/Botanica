@@ -258,5 +258,31 @@ router.get("/callback", async (req, res) => {
   }
 });
 
+// routes/products.js
+router.post("/:id/review", protect, async (req, res) => {
+  const { rating, comment } = req.body;
+  const product = await Product.findById(req.params.id);
+
+  if (!product) return res.status(404).json({ message: "Product not found" });
+
+  const alreadyReviewed = product.reviews.find(
+    (r) => r.user.toString() === req.user._id.toString()
+  );
+
+  if (alreadyReviewed) return res.status(400).json({ message: "Product already reviewed" });
+
+  const review = {
+    user: req.user._id,
+    name: req.user.name,
+    rating: Number(rating),
+    comment,
+  };
+
+  product.reviews.push(review);
+  await product.save();
+  res.status(201).json({ message: "Review added" });
+});
+
+
 export default router;
 

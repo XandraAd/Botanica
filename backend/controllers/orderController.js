@@ -88,8 +88,21 @@ export const getAllOrders = asyncHandler(async (req, res) => {
 // @route   GET /api/orders/mine
 // @access  Private
 export const getUserOrders = asyncHandler(async (req, res) => {
-  const orders = await Order.find({ user: req.user._id });
-  res.json(orders);
+  const orders = await Order.find({ user: req.user._id }).populate(
+    "user",
+    "name email"
+  );
+
+  const ordersWithISO = orders.map((order) => {
+    const o = order.toObject();
+    o.createdAt = order.createdAt.toISOString();
+    o.updatedAt = order.updatedAt.toISOString();
+    if (order.paidAt) o.paidAt = order.paidAt.toISOString();
+    if (order.deliveredAt) o.deliveredAt = order.deliveredAt.toISOString();
+    return o;
+  });
+
+  res.json(ordersWithISO);
 });
 
 // @desc    Count total orders
@@ -149,8 +162,15 @@ export const findOrderById = asyncHandler(async (req, res) => {
     throw new Error("Order not found");
   }
 
-  res.json(order);
+  const orderObj = order.toObject();
+  orderObj.createdAt = order.createdAt.toISOString();
+  orderObj.updatedAt = order.updatedAt.toISOString();
+  if (order.paidAt) orderObj.paidAt = order.paidAt.toISOString();
+  if (order.deliveredAt) orderObj.deliveredAt = order.deliveredAt.toISOString();
+
+  res.json(orderObj);
 });
+
 
 // @desc    Mark order as paid
 // @route   PUT /api/orders/:id/pay

@@ -1,34 +1,37 @@
 import mongoose from "mongoose";
 import dotenv from "dotenv";
-import Product from "./models/productModel.js";
-import Collection from "./models/collectionModel.js";
+import Collection from "../models/collectionModel.js";
 
 dotenv.config();
 
-const connectDB = async () => {
+const run = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI);
-    console.log("MongoDB connected");
+
+    const collections = await Collection.find({}).populate({
+      path: "products",
+      select: "images",
+    });
+
+    for (const col of collections) {
+      let preview = col.image || col.products?.[0]?.images?.[0] || null;
+
+      if (preview && !preview.startsWith("http")) {
+        preview = `http://localhost:5000${preview}`;
+      }
+
+      col.previewImage = preview;
+      col.count = col.products?.length || 0;
+      await col.save();
+      console.log(`✅ Updated collection: ${col.name}`);
+    }
+
+    console.log("🎉 Collections updated successfully!");
+    process.exit();
   } catch (err) {
-    console.error(err);
+    console.error("❌ Error updating collections:", err.message);
     process.exit(1);
   }
 };
 
-const populateCollections = async () => {
-  const products = await Product.find({}).lean();
-
-  for (const product of products) {
-    if (product.collections?.length) {
-      await Collection.updateMany(
-        { _id: { $in: product.collections } },
-        { $addToSet: { products: product._id } }
-      );
-    }
-  }
-
-  console.log("Collections populated successfully!");
-  mongoose.disconnect();
-};
-
-connectDB().then(populateCollections);
+run();

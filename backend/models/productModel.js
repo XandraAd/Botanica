@@ -22,6 +22,18 @@ const productSchema = new mongoose.Schema({
   sold: { type: Number, default: 0 },
 
 collections: [{ type: mongoose.Schema.Types.ObjectId, ref: "Collection" }],
+reviews: [
+    {
+      user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+      name: String,
+      rating: Number,
+      comment: String,
+      createdAt: { type: Date, default: Date.now },
+    },
+  ],
+    // ✅ New fields
+    rating: { type: Number, required: true, default: 0 },
+    numReviews: { type: Number, required: true, default: 0 },
 
 
  

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import ProductCard from "../../components/ProductCard";
-import { PRODUCT_URL } from "../../store/constants";
+import { API_URL } from "../../store/constants";
 
 const ProductPage = () => {
   const [products, setProducts] = useState([]);
@@ -10,7 +10,7 @@ const ProductPage = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch(PRODUCT_URL);
+        const res = await fetch(`${API_URL}/products/allproducts`);
         if (!res.ok) throw new Error("Failed to fetch products");
         const data = await res.json();
         setProducts(data);

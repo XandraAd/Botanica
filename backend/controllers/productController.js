@@ -205,12 +205,15 @@ export const fetchAllProducts = asyncHandler(async (req, res) => {
 
 
 // ✅ Reviews
-export const addProductReview = asyncHandler(async (req, res) => {
+export const addProductReview = async (req, res) => {
   const { rating, comment } = req.body;
   const product = await Product.findById(req.params.id);
 
-  if (!product) return res.status(404).json({ message: "Product not found" });
+  if (!product) {
+    return res.status(404).json({ message: "Product not found" });
+  }
 
+  // Check if user already reviewed
   const alreadyReviewed = product.reviews.find(
     (r) => r.user.toString() === req.user._id.toString()
   );
@@ -218,21 +221,31 @@ export const addProductReview = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: "Product already reviewed" });
   }
 
-  product.reviews.push({
-    name: req.user.username,
-    rating: Number(rating),
-    comment,
+  // Check if user purchased the product
+  const hasOrdered = await Order.findOne({
     user: req.user._id,
+    isPaid: true,            // or delivered
+    "orderItems.product": req.params.id,
   });
 
-  product.numReviews = product.reviews.length;
-  product.rating =
-    product.reviews.reduce((acc, item) => item.rating + acc, 0) /
-    product.reviews.length;
+  if (!hasOrdered) {
+    return res.status(403).json({ message: "Only verified buyers can review" });
+  }
 
+  // Push new review
+  const review = {
+    user: req.user._id,
+    name: req.user.name,
+    rating: Number(rating),
+    comment,
+  };
+
+  product.reviews.push(review);
   await product.save();
-  res.status(201).json({ message: "Review added" });
-});
+
+  res.status(201).json({ message: "Review added", review });
+};
+
 
 // ✅ Top Products
 export const fetchTopProducts = asyncHandler(async (req, res) => {

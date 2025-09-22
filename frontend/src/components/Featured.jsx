@@ -1,14 +1,13 @@
-// src/components/Featured.jsx
 import React, { useEffect, useState } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Mousewheel, Navigation } from "swiper/modules";
 import SectionHeader from "./SectionHeader";
 import ProductCard from "./ProductCard";
-import ProductDetails from "./ProductDetails"; 
-import { PRODUCT_URL } from "../store/constants";
-
+import ProductDetails from "./ProductDetails";
 import "swiper/css";
 import "swiper/css/navigation";
+
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 const Featured = () => {
   const [products, setProducts] = useState([]);
@@ -16,31 +15,29 @@ const Featured = () => {
   const [error, setError] = useState("");
   const [selectedProduct, setSelectedProduct] = useState(null);
 
- useEffect(() => {
-  const fetchPlants = async () => {
-    try {
-const res = await fetch(`${PRODUCT_URL}/featured`);
-
-
-
-      const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
-        setProducts(data);
-        setError("");
-      } else {
-        setProducts([]);
-        setError("No plants available");
+  useEffect(() => {
+    const fetchPlants = async () => {
+      try {
+        const res = await fetch(`${BASE_URL}/products/featured`);
+        if (!res.ok) throw new Error("Network response was not ok");
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          setProducts(data);
+          setError("");
+        } else {
+          setProducts([]);
+          setError("No plants available");
+        }
+      } catch (err) {
+        console.error("Fetch error:", err);
+        setError("Failed to load products");
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Fetch error:", error);
-      setError("Failed to load products");
-    } finally {
-      setLoading(false);
-    }
-  };
-  fetchPlants();
-}, []);
+    };
 
+    fetchPlants();
+  }, []);
 
   if (loading) return <p className="text-center py-6">Loading...</p>;
   if (error) return <p className="text-center py-6 text-red-500">{error}</p>;
@@ -93,7 +90,7 @@ const res = await fetch(`${PRODUCT_URL}/featured`);
         </div>
       </div>
 
-      {/* ✅ Modal lives here */}
+      {/* Modal */}
       {selectedProduct && (
         <ProductDetails
           product={selectedProduct}

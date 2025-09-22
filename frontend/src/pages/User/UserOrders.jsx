@@ -2,14 +2,10 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
-
-const OrderDetails = ({ orders }) => {
+const UserOrders = ({ orders }) => {
   if (!orders || orders.length === 0) {
     return <p className="text-gray-600">You have no orders yet.</p>;
   }
-
-  
-  const formatDate = (date) => (date ? new Date(date).toLocaleDateString() : "Unknown date");
 
   return (
     <div>
@@ -23,7 +19,9 @@ const OrderDetails = ({ orders }) => {
             <div>
               <p className="font-medium">Order #{order._id}</p>
               <p className="text-sm text-gray-600">
-              Date: {formatDate(order.createdAt)}
+                {order.createdAt
+                  ? new Date(order.createdAt).toLocaleDateString()
+                  : "Unknown date"}
               </p>
               <p className="text-sm text-gray-600">
                 Total: ${order.totalPrice?.toFixed(2)}
@@ -37,7 +35,7 @@ const OrderDetails = ({ orders }) => {
               </p>
             </div>
             <Link
-              to={`/orders/${order._id}`}
+              to={`/orders/${order._id}`} // go to single order page
               className="text-blue-600 hover:underline"
             >
               View Details
@@ -49,4 +47,4 @@ const OrderDetails = ({ orders }) => {
   );
 };
 
-export default OrderDetails;
+export default UserOrders;

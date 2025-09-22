@@ -2,11 +2,14 @@ import React, { useState, useEffect } from "react";
 import Message from "../../components/Message";
 import Loader from "../../components/Loader";
 import { Link } from "react-router-dom";
-import { useGetOrdersQuery } from "../../slices/orderSlice";
+import { useGetOrdersQuery,useDeliverOrderMutation } from "../../slices/orderSlice";
+import { toast } from "react-toastify";
 
 
 const OrderList = () => {
-  const { data: orders, isLoading, error } = useGetOrdersQuery();
+  const { data: orders, isLoading, error ,refetch} = useGetOrdersQuery();
+    const [deliverOrder, { isLoading: loadingDeliver }] = useDeliverOrderMutation();
+
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -72,6 +75,19 @@ const OrderList = () => {
 
   // Change page
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  // Handle marking as delivered
+  const markAsDelivered = async (id) => {
+    if (window.confirm("Mark this order as delivered?")) {
+      try {
+        await deliverOrder(id).unwrap();
+        toast.success("Order marked as delivered");
+        refetch(); // Refresh order list
+      } catch (err) {
+        toast.error(err?.data?.message || err.error);
+      }
+    }
+  };
 
   // Generate page numbers for pagination
   const pageNumbers = [];
@@ -269,17 +285,30 @@ const OrderList = () => {
                                 </span>
                               )}
                             </td>
-                            <td className="p-4">
-                              <Link to={`/order/${order._id}`}>
-                                <button className="px-3 py-1.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm transition-colors flex items-center">
-                                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                  </svg>
-                                  Details
-                                </button>
-                              </Link>
-                            </td>
+                          <td className="p-4 flex gap-2">
+  {/* Details Button */}
+  <Link to={`/order/${order._id}`}>
+    <button className="px-3 py-1.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm transition-colors flex items-center">
+      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+      </svg>
+      Details
+    </button>
+  </Link>
+
+  {/* Mark Delivered Button (only if not delivered) */}
+  {!order.isDelivered && (
+    <button
+      onClick={() => markAsDelivered(order._id)}
+      disabled={loadingDeliver}
+      className="px-3 py-1.5 bg-green-500 text-white rounded-lg hover:bg-green-600 text-sm transition-colors"
+    >
+      {loadingDeliver ? "..." : "Mark Delivered"}
+    </button>
+  )}
+</td>
+
                           </tr>
                         ))}
                       </tbody>
