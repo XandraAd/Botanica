@@ -28,18 +28,27 @@ const app = express();
 
 
 // CORS setup
-const allowedOrigin =
-  process.env.NODE_ENV === "production"
-    ? process.env.CLIENT_URL
-    : "http://localhost:5173";
+const allowedOrigins = [
+  "http://localhost:5173", // local frontend dev
+ "https://botanica-frontend.onrender.com", // deployed frontend
+];
 
 app.use(
   cors({
-    origin: allowedOrigin,
-    credentials: true,
+    origin: function (origin, callback) {
+      // allow requests with no origin (like Postman or SSR)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.warn("Blocked CORS request from:", origin);
+        callback(new Error(`CORS policy blocked: ${origin}`));
+      }
+    },
+    credentials: true, // allow cookies/auth
   })
 );
-
 
 
 
