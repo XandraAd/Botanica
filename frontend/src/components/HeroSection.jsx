@@ -1,10 +1,10 @@
+// frontend/src/components/HeroSection.jsx
 import React, { useState, useEffect } from "react";
 import { Carousel } from "react-responsive-carousel";
 import "react-responsive-carousel/lib/styles/carousel.min.css";
 import axios from "axios";
 import { Link } from "react-router-dom";
-
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+import { API_URL, BASE_URL } from "../store/constants";
 
 const FALLBACKS = [
   {
@@ -36,9 +36,12 @@ const FALLBACKS = [
   },
 ];
 
+// Normalize API response to consistent format
 const normalize = (item = {}, idx) => {
   const srcRaw = item.src ?? item.url ?? item.image ?? item.path ?? "";
   const isAbsolute = /^https?:\/\//i.test(srcRaw);
+
+  // Use BASE_URL for backend static assets
   const src = srcRaw
     ? isAbsolute
       ? srcRaw
@@ -50,7 +53,6 @@ const normalize = (item = {}, idx) => {
   const buttonText = item.buttonText ?? item.cta ?? item.button ?? "Shop Now";
   const alt = item.alt ?? item.altText ?? title ?? "carousel image";
   const id = item._id ?? item.id ?? idx;
-
   const link = item.link ?? (item.slug ? `/category/${item.slug}` : "/shop");
 
   return { id, src, title, description, buttonText, alt, link };
@@ -63,7 +65,7 @@ export default function HeroSection() {
   useEffect(() => {
     const fetchCarouselImages = async () => {
       try {
-        const response = await axios.get(`${BASE_URL}/carousel`);
+        const response = await axios.get(`${API_URL}/carousel`);
         const raw = response.data;
         const arr = Array.isArray(raw) ? raw : raw?.images ?? [];
         const normalized = arr.map((it, i) => normalize(it, i));
@@ -89,6 +91,7 @@ export default function HeroSection() {
 
   return (
     <div className="w-full bg-white relative z-10">
+      {/* Header */}
       <div className="text-center py-8">
         <h2 className="text-sm uppercase tracking-widest text-gray-500">
           Plant life made Easy
@@ -98,6 +101,7 @@ export default function HeroSection() {
         </h1>
       </div>
 
+      {/* Carousel */}
       <Carousel
         autoPlay
         infiniteLoop
@@ -115,10 +119,7 @@ export default function HeroSection() {
               src={image.src}
               alt={image.alt}
               className="w-full h-screen object-cover"
-              onError={(e) =>
-                (e.currentTarget.src =
-                  "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?auto=format&fit=crop&w=1600&q=80")
-              }
+              onError={(e) => (e.currentTarget.src = FALLBACKS[0].src)}
             />
             <div className="absolute inset-0 pointer-events-none">
               <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/20 to-transparent"></div>
@@ -144,6 +145,7 @@ export default function HeroSection() {
         ))}
       </Carousel>
 
+      {/* Recent Purchase Banner */}
       <div className="border-t border-b border-gray-200 py-4 bg-green-50">
         <div className="text-center">
           <p className="text-sm text-gray-700">

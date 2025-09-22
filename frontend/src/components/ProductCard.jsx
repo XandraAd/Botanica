@@ -161,11 +161,16 @@ const rating =
           {product.name}
         </h3>
 
-        {product.collection && (
-          <p className="text-gray-600 text-sm">{product.collection}</p>
-        )}
+       
 
-        {/* Rating summary - fixed logic */}
+       
+        {/* Price */}
+        <div className="flex justify-between items-center mt-3">
+          <span className="font-bold text-lg">
+            ${product.price ? product.price.toFixed(2) : "N/A"}
+          </span>
+        </div>
+         {/* Rating summary - fixed logic */}
         {rating > 0 && (
          <div className="flex items-center text-sm">
   {Array.from({ length: 5 }).map((_, index) => (
@@ -186,12 +191,6 @@ const rating =
 
         )}
 
-        {/* Price */}
-        <div className="flex justify-between items-center mt-3">
-          <span className="font-bold text-lg">
-            ${product.price ? product.price.toFixed(2) : "N/A"}
-          </span>
-        </div>
       </div>
     </div>
   );

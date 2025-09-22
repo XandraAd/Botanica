@@ -1,13 +1,15 @@
 import express from "express";
-
 const router = express.Router();
+
+// Use environment variable for base URL
+const BASE_URL = process.env.BASE_URL || "http://localhost:5000";
 
 // Get all carousel images for plants
 router.get("/", (req, res) => {
   const carouselImages = [
     {
       id: 1,
-      src: "/assets/plantCarousel/tropical.jpg",
+      src: `${BASE_URL}/assets/plantCarousel/tropical.jpg`,
       alt: "Tropical Leaf Plants",
       title: "Tropical Collection",
       description: "Bring the jungle to your home",
@@ -15,7 +17,7 @@ router.get("/", (req, res) => {
     },
     {
       id: 2,
-      src: "/assets/plantCarousel/succulents.jpg",
+      src: `${BASE_URL}/assets/plantCarousel/succulents.jpg`,
       alt: "Succulent Plants",
       title: "Succulent Variety",
       description: "Low-maintenance beautiful succulents",
@@ -23,7 +25,7 @@ router.get("/", (req, res) => {
     },
     {
       id: 3,
-      src: "/assets/plantCarousel/flowerPlant.jpg",
+      src: `${BASE_URL}/assets/plantCarousel/flowerPlant.jpg`,
       alt: "Flowering Plants",
       title: "Blooming Beauties",
       description: "Colorful flowering plants for every season",
@@ -31,7 +33,7 @@ router.get("/", (req, res) => {
     },
     {
       id: 4,
-      src: "/assets/plantCarousel/indoorplant.jpg",
+      src: `${BASE_URL}/assets/plantCarousel/indoorplant.jpg`,
       alt: "Indoor Plants",
       title: "Statement Plants",
       description: "Make a bold statement with indoor plants",
@@ -39,7 +41,7 @@ router.get("/", (req, res) => {
     },
     {
       id: 5,
-      src: "/assets/plantCarousel/herb.jpg", 
+      src: `${BASE_URL}/assets/plantCarousel/herb.jpg`, 
       alt: "Herb Garden",
       title: "Culinary Herbs",
       description: "Fresh herbs for your kitchen",
@@ -47,7 +49,7 @@ router.get("/", (req, res) => {
     },
     {
       id: 6,
-      src: "/assets/plantCarousel/rarePlant.jpg", 
+      src: `${BASE_URL}/assets/plantCarousel/rarePlant.jpg`, 
       alt: "Rare Plants",
       title: "Exclusive Varieties",
       description: "Unique and rare plant collections",
