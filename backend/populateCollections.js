@@ -1,8 +1,12 @@
 import mongoose from "mongoose";
 import dotenv from "dotenv";
-import Collection from "../models/collectionModel.js";
+import Collection from "./models/collectionModel.js";
+import Product from "./models/productModel.js";
+import slugify from "slugify";
 
 dotenv.config();
+
+
 
 const run = async () => {
   try {
@@ -22,6 +26,12 @@ const run = async () => {
 
       col.previewImage = preview;
       col.count = col.products?.length || 0;
+
+      // ✅ Add slug if missing
+      if (!col.slug) {
+        col.slug = slugify(col.name, { lower: true });
+      }
+
       await col.save();
       console.log(`✅ Updated collection: ${col.name}`);
     }
@@ -33,5 +43,6 @@ const run = async () => {
     process.exit(1);
   }
 };
+
 
 run();

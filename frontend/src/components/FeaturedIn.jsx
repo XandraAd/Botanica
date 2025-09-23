@@ -20,9 +20,9 @@ const FeaturedIn = () => {
       name: "Bloomscape"
     },
     {
-      src: "http://localhost:5000/assets/featuredImages/momo.jpg",
-      alt: "Momo",
-      name: "Momo"
+      src: "http://localhost:5000/assets/featuredImages/gardenersWorld.png",
+      alt: "Gardeners World",
+      name:"Gardeners World"
     }
   ];
 

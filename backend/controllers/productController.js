@@ -4,6 +4,8 @@ import asyncHandler from "../middlewares/asyncHandler.js";
 import Product from "../models/productModel.js";
 import Collection from "../models/collectionModel.js";
 import Category from "../models/categoryModel.js"
+import Order from "../models/orderModel.js";
+
 
 
 
@@ -258,15 +260,20 @@ export const fetchNewProducts = asyncHandler(async (req, res) => {
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-  const newProducts = await Product.find({
+  let newProducts = await Product.find({
     createdAt: { $gte: thirtyDaysAgo },
   })
     .sort({ createdAt: -1 })
-    .limit(10);
+    .limit(10)
+    .populate("category", "name") // populate category name
+    .populate("collections", "name"); // populate collection names
 
+  // If no new products, fallback to featured
   if (newProducts.length === 0) {
-    const featuredProducts = await Product.find({ isFeatured: true }).limit(10);
-    return res.json(featuredProducts);
+    newProducts = await Product.find({ featured: true })
+      .limit(10)
+      .populate("category", "name")
+      .populate("collections", "name");
   }
 
   res.json(newProducts);

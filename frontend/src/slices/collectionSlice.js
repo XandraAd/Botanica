@@ -38,6 +38,7 @@ export const collectionSlice = apiSlice.injectEndpoints({
     name: c.name || "Untitled Collection",
     previewImage: c.previewImage || null, // use backend field
     productsCount: c.count ?? c.products?.length ?? 0,
+    slug: c.slug || "", // ensure slug is included
   })),
 
 

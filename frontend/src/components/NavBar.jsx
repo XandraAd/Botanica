@@ -223,10 +223,10 @@ const NavBar = () => {
         {/* Secondary navigation */}
         <div className="hidden lg:flex justify-center border-t border-gray-200 pt-4 pb-3">
           <div className="flex space-x-10">
-            <Link to="/indoor-plants" className="text-gray-700 hover:text-gray-900 font-medium text-sm uppercase tracking-wider">Indoor Plants</Link>
-            <Link to="/outdoor-plants" className="text-gray-700 hover:text-gray-900 font-medium text-sm uppercase tracking-wider">Outdoor Plants</Link>
-            <Link to="/plant-accessories" className="text-gray-700 hover:text-gray-900 font-medium text-sm uppercase tracking-wider">Accessories</Link>
-            <Link to="/sale" className="text-red-600 hover:text-red-700 font-medium text-sm uppercase tracking-wider">Sale</Link>
+          <Link to="/collections?filter=indoor" className="text-gray-700 hover:text-gray-900 font-medium text-sm uppercase tracking-wider">Indoor Plants</Link>
+           <Link to="/collections?filter=outdoor"className="text-gray-700 hover:text-gray-900 font-medium text-sm uppercase tracking-wider">Outdoor Plants</Link>
+          <Link to="/collections?filter=accessories" className="text-gray-700 hover:text-gray-900 font-medium text-sm uppercase tracking-wider">Accessories</Link>
+          <Link to="/collections?filter=sale" className="text-red-600 hover:text-red-700 font-medium text-sm uppercase tracking-wider">Sale</Link>
           </div>
         </div>
       </div>
@@ -238,10 +238,10 @@ const NavBar = () => {
             <Link to="/new-arrivals" onClick={closeMenu} className="block px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-md font-medium">New Arrivals</Link>
             <Link to="/collections" onClick={closeMenu} className="block px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-md font-medium">Collections</Link>
             <Link to="/plants" onClick={closeMenu} className="block px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-md font-medium">Plants</Link>
-            <Link to="/indoor-plants" onClick={closeMenu} className="block px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-md font-medium">Indoor Plants</Link>
-            <Link to="/outdoor-plants" onClick={closeMenu} className="block px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-md font-medium">Outdoor Plants</Link>
-            <Link to="/plant-accessories" onClick={closeMenu} className="block px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-md font-medium">Accessories</Link>
-            <Link to="/sale" onClick={closeMenu} className="block px-3 py-2 text-red-600 hover:bg-gray-50 rounded-md font-medium">Sale</Link>
+            <Link to="/collections?filter=indoor"onClick={closeMenu} className="block px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-md font-medium">Indoor Plants</Link>
+            <Link to="/collections?filter=outdoor" onClick={closeMenu} className="block px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-md font-medium">Outdoor Plants</Link>
+            <Link to="/collections?filter=accessories" onClick={closeMenu} className="block px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-md font-medium">Accessories</Link>
+            <Link to="/collections?filter=sales"onClick={closeMenu} className="block px-3 py-2 text-red-600 hover:bg-gray-50 rounded-md font-medium">Sale</Link>
 
             {/* Mobile user menu */}
             {auth.userInfo ? (

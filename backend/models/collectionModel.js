@@ -1,5 +1,6 @@
 // models/collectionModel.js
 import mongoose from "mongoose";
+import slugify from "slugify";
 
 const collectionSchema = new mongoose.Schema(
   {
@@ -29,6 +30,11 @@ const collectionSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    slug: {
+      type: String,
+      unique: true,
+      lowercase: true,
+    },
   },
   { timestamps: true }
 );
@@ -46,6 +52,15 @@ collectionSchema.pre("findOneAndUpdate", function (next) {
   }
   next();
 });
+
+// Auto-generate slug
+collectionSchema.pre("save", function (next) {
+  if (this.isModified("name")) {
+    this.slug = slugify(this.name, { lower: true });
+  }
+  next();
+});
+
 
 const Collection = mongoose.model("Collection", collectionSchema);
 export default Collection;

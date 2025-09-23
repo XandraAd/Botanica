@@ -37,9 +37,9 @@ const FilterSidebar = ({
     )];
   }, [data, filtersConfig]);
 
-  // Get price range from data
+  // Get price range from data - FIXED: Handle cases where price might be undefined
   const priceBounds = useMemo(() => {
-    const prices = data.map(item => item.price).filter(price => typeof price === 'number');
+    const prices = data.map(item => item.price).filter(price => typeof price === 'number' && !isNaN(price));
     if (prices.length === 0) return [0, 1000];
     return [Math.floor(Math.min(...prices)), Math.ceil(Math.max(...prices))];
   }, [data]);
@@ -49,61 +49,81 @@ const FilterSidebar = ({
   const [selectedSizes, setSelectedSizes] = useState([]);
   const [selectedColors, setSelectedColors] = useState([]);
   const [selectedCollections, setSelectedCollections] = useState([]);
-  const [priceRange, setPriceRange] = useState(priceBounds);
+  const [priceRange, setPriceRange] = useState([0, 1000]); // Default values
 
-  // Update price range when data changes
+  // Update price range when data changes - FIXED: Only update if bounds are valid
   useEffect(() => {
-    setPriceRange(priceBounds);
+    if (priceBounds[0] !== undefined && priceBounds[1] !== undefined && 
+        !isNaN(priceBounds[0]) && !isNaN(priceBounds[1])) {
+      setPriceRange(priceBounds);
+    }
   }, [priceBounds]);
 
-  // Expand/collapse sections
+  // Expand/collapse sections - FIXED: Initialize based on filtersConfig
   const [activeSections, setActiveSections] = useState({
-    categories: true,
-    sizes: true,
-    colors: true,
-    collections: true,
+    categories: filtersConfig.showCategories || false,
+    sizes: filtersConfig.showSizes || false,
+    colors: filtersConfig.showColors || false,
+    collections: filtersConfig.showCollections || false,
     price: true,
   });
 
-  // Apply filters
+  // Apply filters - FIXED: Added proper error handling and validation
   useEffect(() => {
+    if (!data || data.length === 0) {
+      onFilter([]);
+      return;
+    }
+
     let filtered = [...data];
-    
-    if (selectedCategories.length > 0) {
-      filtered = filtered.filter((item) =>
-        selectedCategories.includes(item.category?.name || item.category)
-      );
+
+    try {
+      if (selectedCategories.length > 0) {
+        filtered = filtered.filter((item) =>
+          selectedCategories.includes(item.category?.name || item.category)
+        );
+      }
+
+      if (selectedSizes.length > 0) {
+        filtered = filtered.filter((item) =>
+          item.sizes?.some((s) => selectedSizes.includes(s))
+        );
+      }
+
+      if (selectedColors.length > 0) {
+        filtered = filtered.filter((item) =>
+          item.colors?.some((c) => selectedColors.includes(c))
+        );
+      }
+
+      if (selectedCollections.length > 0) {
+        filtered = filtered.filter((item) => {
+          const itemCollectionName = item.collection?.name || item.collection || item.name;
+          return selectedCollections.some(
+            (col) => col.toLowerCase() === (itemCollectionName || "").toLowerCase()
+          );
+        });
+      }
+
+      // FIXED: Added validation for priceRange
+      if (priceRange && priceRange.length === 2 && 
+          !isNaN(priceRange[0]) && !isNaN(priceRange[1])) {
+        filtered = filtered.filter((item) => {
+          const itemPrice = item.price || 0;
+          return itemPrice >= priceRange[0] && itemPrice <= priceRange[1];
+        });
+      }
+
+      onFilter(filtered);
+    } catch (error) {
+      console.error("Error applying filters:", error);
+      onFilter(data); // Fallback to original data
     }
-    
-    if (selectedSizes.length > 0) {
-      filtered = filtered.filter((item) =>
-        item.sizes?.some((s) => selectedSizes.includes(s))
-      );
-    }
-    
-    if (selectedColors.length > 0) {
-      filtered = filtered.filter((item) =>
-        item.colors?.some((c) => selectedColors.includes(c))
-      );
-    }
-    
-    if (selectedCollections.length > 0) {
-      filtered = filtered.filter((item) =>
-        selectedCollections.includes(item.collection?.name || item.collection)
-      );
-    }
-    
-    if (priceRange) {
-      filtered = filtered.filter(
-        (item) => item.price >= priceRange[0] && item.price <= priceRange[1]
-      );
-    }
-    
-    onFilter(filtered);
   }, [data, selectedCategories, selectedSizes, selectedColors, selectedCollections, priceRange, onFilter]);
 
   // Helper functions
   const toggleFilter = (list, setList, value) => {
+    if (!value) return; // FIXED: Added validation
     setList((prev) =>
       prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
     );
@@ -114,7 +134,13 @@ const FilterSidebar = ({
     setSelectedSizes([]);
     setSelectedColors([]);
     setSelectedCollections([]);
-    setPriceRange(priceBounds);
+    // FIXED: Reset to actual bounds instead of potentially undefined values
+    if (priceBounds[0] !== undefined && priceBounds[1] !== undefined && 
+        !isNaN(priceBounds[0]) && !isNaN(priceBounds[1])) {
+      setPriceRange(priceBounds);
+    } else {
+      setPriceRange([0, 1000]);
+    }
   };
 
   const toggleSection = (section) => {
@@ -124,22 +150,33 @@ const FilterSidebar = ({
     }));
   };
 
+  // FIXED: Added proper validation for hasActiveFilters
   const hasActiveFilters =
     selectedCategories.length > 0 ||
     selectedSizes.length > 0 ||
     selectedColors.length > 0 ||
     selectedCollections.length > 0 ||
-    priceRange[0] !== priceBounds[0] ||
-    priceRange[1] !== priceBounds[1];
+    (priceRange && priceRange.length === 2 && 
+     (priceRange[0] !== (priceBounds[0] || 0) || priceRange[1] !== (priceBounds[1] || 1000)));
 
-  // Count active filters for badge
+  // Count active filters for badge - FIXED: Added validation
   const activeFilterCount = [
     selectedCategories.length,
     selectedSizes.length,
     selectedColors.length,
     selectedCollections.length,
-    priceRange[0] !== priceBounds[0] || priceRange[1] !== priceBounds[1] ? 1 : 0
+    (priceRange && priceRange.length === 2 && 
+     (priceRange[0] !== (priceBounds[0] || 0) || priceRange[1] !== (priceBounds[1] || 1000))) ? 1 : 0
   ].reduce((sum, count) => sum + count, 0);
+
+  // FIXED: Added safety check for rendering
+  if (!data) {
+    return (
+      <aside className="fixed md:sticky top-0 left-0 h-full md:h-auto w-80 md:w-72 bg-white shadow-xl md:shadow-sm md:rounded-lg z-40 md:z-0 overflow-y-auto">
+        <div className="p-5 text-center text-gray-500">Loading filters...</div>
+      </aside>
+    );
+  }
 
   return (
     <>
@@ -358,11 +395,11 @@ const FilterSidebar = ({
                     <label className="text-xs text-gray-500 block mb-1">Min</label>
                     <input
                       type="number"
-                      value={priceRange[0]}
+                      value={priceRange[0] || 0}
                       onChange={(e) => setPriceRange([+e.target.value, priceRange[1]])}
                       className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                      min={priceBounds[0]}
-                      max={priceBounds[1]}
+                      min={priceBounds[0] || 0}
+                      max={priceBounds[1] || 1000}
                     />
                   </div>
                   <span className="text-gray-400 mt-5">-</span>
@@ -370,16 +407,16 @@ const FilterSidebar = ({
                     <label className="text-xs text-gray-500 block mb-1">Max</label>
                     <input
                       type="number"
-                      value={priceRange[1]}
+                      value={priceRange[1] || 1000}
                       onChange={(e) => setPriceRange([priceRange[0], +e.target.value])}
                       className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                      min={priceBounds[0]}
-                      max={priceBounds[1]}
+                      min={priceBounds[0] || 0}
+                      max={priceBounds[1] || 1000}
                     />
                   </div>
                 </div>
                 <div className="text-xs text-gray-500 text-center">
-                  ${priceRange[0]} - ${priceRange[1]}
+                  ${priceRange[0] || 0} - ${priceRange[1] || 1000}
                 </div>
               </div>
             )}

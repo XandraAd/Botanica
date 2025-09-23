@@ -8,7 +8,7 @@
     "start": "node index.js",
     "dev": "nodemon index.js",
     "build": "cd ../frontend && npm install && npm run build",
-      "dev:all": "concurrently \"npm run dev\" \"npm run frontend\""
+    "dev:all": "concurrently \"npm run dev\" \"npm run frontend\""
   },
   "dependencies": {
     "axios": "^1.11.0",

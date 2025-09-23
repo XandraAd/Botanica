@@ -81,6 +81,7 @@ function App() {
         >
           <Route index element={<Home />} />
           <Route path="collections" element={<CollectionsPage />} />
+          <Route path="/collections/:slug" element={<CollectionsPage />} />
           <Route path="collections/:collectionId" element={<CollectionPage />} />
           <Route path="category/:slug" element={<CategoryPage />} />
           <Route path="product/:id" element={<ProductPage />} />
