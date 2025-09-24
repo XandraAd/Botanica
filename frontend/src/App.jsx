@@ -6,6 +6,7 @@ import Home from "./pages/Home";
 import NavBar from "./components/NavBar";
 import Newest from "./pages/Products/Newest";
 import Plants from "./pages/Products/Plants";
+import Accessories from "./pages/Products/Accessories";
 import ProductPage from "./pages/Products/ProductPage";
 import Footer from "./components/Footer";
 import CollectionPage from "./pages/Products/CollectionPage";
@@ -87,6 +88,7 @@ function App() {
           <Route path="product/:id" element={<ProductPage />} />
           <Route path="new-arrivals" element={<Newest />} />
           <Route path="plants" element={<Plants />} />
+          <Route path="accessories" element={<Accessories />} />
           <Route path="product-details" element={<ProductDetails />} />
           <Route path="cart" element={<Cart />} />
           <Route path="order-confirmation" element={<OrderConfirmation />} />

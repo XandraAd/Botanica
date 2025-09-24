@@ -287,7 +287,7 @@ const OrderList = () => {
                             </td>
                           <td className="p-4 flex gap-2">
   {/* Details Button */}
-  <Link to={`/order/${order._id}`}>
+  <Link to={`/orders/${order._id}`}>
     <button className="px-3 py-1.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm transition-colors flex items-center">
       <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />

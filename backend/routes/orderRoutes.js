@@ -11,6 +11,7 @@ import {
   findOrderById,
   markOrderAsPaid,
   markOrderAsDelivered,
+  paystackReference
 } from "../controllers/orderController.js";
 
 import { protect, admin } from "../middlewares/authMiddleware.js";
@@ -24,6 +25,7 @@ router.route("/mine").get(protect, getUserOrders);
 router.route("/total-orders").get(countTotalOrders);
 router.route("/total-sales").get(calculateTotalSales);
 router.route("/total-sales-by-date").get(calculateTotalSalesByDate);
+router.route("/verify-payment/:reference").get(protect, paystackReference);
 router.route("/:id").get(protect, findOrderById);
 router.route("/:id/pay").put(protect, markOrderAsPaid);
 router

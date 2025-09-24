@@ -19,6 +19,7 @@ import collectionRoutes from "./routes/collectionRoutes.js";
 import cartRoutes from "./routes/CartRoutes.js";
 import paymentRoutes from "./routes/PaymentRoutes.js";
 import addressRoutes from "./routes/addressRoutes.js";
+import salesRoutes from "./routes/salesRoutes.js"; 
 
 dotenv.config();
 connectDB();
@@ -71,6 +72,7 @@ app.use("/api/cart", cartRoutes);
 app.use("/api/addresses", addressRoutes);
 app.use("/api/decor", decorRoutes);
 app.use("/api/payment", paymentRoutes);
+app.use("/api/sale", salesRoutes);
 
 // static serving
 const __filename = fileURLToPath(import.meta.url);

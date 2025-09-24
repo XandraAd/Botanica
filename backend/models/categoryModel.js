@@ -4,7 +4,9 @@ import slugify from "slugify";
 const categorySchema = new mongoose.Schema({
   name: { type: String, required: true, unique: true },
   slug: { type: String, unique: true },
-});
+},
+ { timestamps: true }
+);
 
 // auto-generate slug when name is created/updated
 categorySchema.pre("save", function (next) {

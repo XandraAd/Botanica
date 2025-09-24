@@ -8,7 +8,7 @@ import {
 import { toast } from "react-toastify";
 import CategoryForm from "../../components/CategoryForm";
 import Modal from "../../components/Modal";
-import AdminMenu from "./AdminMenu";
+
 
 const CategoryList = () => {
   const { data: categories } = useFetchCategoriesQuery();

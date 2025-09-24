@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { FaCheckCircle, FaTimesCircle, FaShoppingCart } from "react-icons/fa";
 import { BASE_URL } from "../../store/constants";
@@ -6,7 +6,56 @@ import { BASE_URL } from "../../store/constants";
 const OrderConfirmation = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { order, success = false } = location.state || {};
+
+  const [order, setOrder] = useState(null);
+  const [success, setSuccess] = useState(false);
+
+  // On mount, decide where to load order from
+  useEffect(() => {
+    const { order: stateOrder, success: stateSuccess = false } =
+      location.state || {};
+
+    if (stateOrder) {
+      // Case 1: came from checkout page directly
+      setOrder(stateOrder);
+      setSuccess(stateSuccess);
+      localStorage.setItem("lastOrder", JSON.stringify(stateOrder));
+      return;
+    }
+
+    const savedOrder = localStorage.getItem("lastOrder");
+    if (savedOrder) {
+      // Case 2: refresh or direct visit after checkout
+      setOrder(JSON.parse(savedOrder));
+      setSuccess(true);
+      return;
+    }
+
+    // Case 3: Paystack redirected back with ?reference=xxxx
+    const params = new URLSearchParams(location.search);
+    const ref = params.get("reference");
+    if (ref) {
+      fetch(`${BASE_URL}/api/orders/by-reference/${ref}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data?.order) {
+            setOrder(data.order);
+            setSuccess(true);
+            localStorage.setItem("lastOrder", JSON.stringify(data.order));
+          } else {
+            setSuccess(false);
+          }
+        })
+        .catch(() => setSuccess(false));
+    }
+  }, [location]);
+
+  // Clear localStorage after showing
+  useEffect(() => {
+    if (order) {
+      localStorage.removeItem("lastOrder");
+    }
+  }, [order]);
 
   const getImageUrl = (imagePath) => {
     if (!imagePath) return "/fallback-image.jpg"; // fallback image
@@ -30,9 +79,7 @@ const OrderConfirmation = () => {
             ) : (
               <>
                 <FaTimesCircle className="text-red-500 text-5xl mx-auto mb-3" />
-                <h1 className="text-2xl font-bold text-red-600">
-                  Order Issue
-                </h1>
+                <h1 className="text-2xl font-bold text-red-600">Order Issue</h1>
               </>
             )}
           </div>
@@ -84,7 +131,9 @@ const OrderConfirmation = () => {
                           className="w-14 h-14 rounded-md object-cover border"
                         />
                         <div className="flex-1">
-                          <p className="font-medium text-gray-800">{item.name}</p>
+                          <p className="font-medium text-gray-800">
+                            {item.name}
+                          </p>
                           <p className="text-sm text-gray-500">
                             Qty: {item.qty} × ${item.price}
                           </p>
@@ -110,16 +159,23 @@ const OrderConfirmation = () => {
               Continue Shopping
             </button>
 
-            {order && (
+            {order ? (
               <button
                 onClick={() =>
-                  navigate(`/order/${order._id}`, {
-                    state: { fromConfirmation: true }, // pass flag
+                  navigate(`/orders/${order._id}`, {
+                    state: { fromConfirmation: true },
                   })
                 }
                 className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
               >
                 View Full Order
+              </button>
+            ) : (
+              <button
+                onClick={() => navigate("/orders")}
+                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+              >
+                Go to My Orders
               </button>
             )}
           </div>

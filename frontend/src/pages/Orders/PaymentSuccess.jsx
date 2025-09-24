@@ -83,36 +83,45 @@ const PaymentSuccess = () => {
     verifyPayment();
   }, [reference, dispatch, navigate, userInfo]);
 
+  let content;
+  if (loading) {
+    content = (
+      <>
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <h1 className="text-2xl font-bold text-blue-600 mb-2">Verifying Payment</h1>
+        <p className="text-gray-600">Please wait while we confirm your payment...</p>
+      </>
+    );
+  } else if (status === "success") {
+    content = (
+      <>
+        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+        </div>
+        <h1 className="text-2xl font-bold text-green-600 mb-2">Payment Successful!</h1>
+        <p className="text-gray-600">Redirecting to order confirmation...</p>
+      </>
+    );
+  } else {
+    content = (
+      <>
+        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </div>
+        <h1 className="text-2xl font-bold text-red-600 mb-2">Payment Failed</h1>
+        <p className="text-gray-600">Redirecting to order confirmation...</p>
+      </>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
       <div className="bg-white p-8 rounded-lg shadow-md text-center max-w-md">
-        {loading ? (
-          <>
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <h1 className="text-2xl font-bold text-blue-600 mb-2">Verifying Payment</h1>
-            <p className="text-gray-600">Please wait while we confirm your payment...</p>
-          </>
-        ) : status === "success" ? (
-          <>
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-              </svg>
-            </div>
-            <h1 className="text-2xl font-bold text-green-600 mb-2">Payment Successful!</h1>
-            <p className="text-gray-600">Redirecting to order confirmation...</p>
-          </>
-        ) : (
-          <>
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-              </svg>
-            </div>
-            <h1 className="text-2xl font-bold text-red-600 mb-2">Payment Failed</h1>
-            <p className="text-gray-600">Redirecting to order confirmation...</p>
-          </>
-        )}
+        {content}
       </div>
     </div>
   );

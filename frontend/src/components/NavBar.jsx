@@ -225,8 +225,8 @@ const NavBar = () => {
           <div className="flex space-x-10">
           <Link to="/collections?filter=indoor" className="text-gray-700 hover:text-gray-900 font-medium text-sm uppercase tracking-wider">Indoor Plants</Link>
            <Link to="/collections?filter=outdoor"className="text-gray-700 hover:text-gray-900 font-medium text-sm uppercase tracking-wider">Outdoor Plants</Link>
-          <Link to="/collections?filter=accessories" className="text-gray-700 hover:text-gray-900 font-medium text-sm uppercase tracking-wider">Accessories</Link>
-          <Link to="/collections?filter=sale" className="text-red-600 hover:text-red-700 font-medium text-sm uppercase tracking-wider">Sale</Link>
+          <Link to="/accessories" className="text-gray-700 hover:text-gray-900 font-medium text-sm uppercase tracking-wider">Accessories</Link>
+          <Link to="/category/sale" className="text-red-600 hover:text-red-700 font-medium text-sm uppercase tracking-wider">Sale</Link>
           </div>
         </div>
       </div>

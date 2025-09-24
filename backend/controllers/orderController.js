@@ -25,11 +25,12 @@ function calcPrices(orderItems) {
   };
 }
 
+
 // @desc    Create new order
 // @route   POST /api/orders
 // @access  Private
 export const createOrder = asyncHandler(async (req, res) => {
-  const { orderItems, shippingAddress, paymentMethod } = req.body;
+  const { orderItems, shippingAddress, paymentMethod, reference } = req.body;
 
   if (!orderItems || orderItems.length === 0) {
     res.status(400);
@@ -72,9 +73,18 @@ export const createOrder = asyncHandler(async (req, res) => {
     totalPrice,
   });
 
+  // If payment method is Paystack, attach reference immediately
+  if (paymentMethod === "Paystack" && reference) {
+    order.paymentResult = {
+      reference,
+      status: "pending",
+    };
+  }
+
   const createdOrder = await order.save();
   res.status(201).json(createdOrder);
 });
+
 
 // @desc    Get all orders
 // @route   GET /api/orders
@@ -213,3 +223,27 @@ export const markOrderAsDelivered = asyncHandler(async (req, res) => {
   const updatedOrder = await order.save();
   res.json(updatedOrder);
 });
+// @desc    Get order by Paystack reference
+// @route   GET /api/orders/by-reference/:reference
+// @access  Private
+export const paystackReference = asyncHandler(async (req, res) => {
+  const { reference } = req.params;
+
+  const order = await Order.findOne({
+    "paymentResult.reference": reference,
+  }).populate("user", "name email");
+
+  if (!order) {
+    res.status(404);
+    throw new Error("Order not found");
+  }
+
+  const orderObj = order.toObject();
+  orderObj.createdAt = order.createdAt.toISOString();
+  orderObj.updatedAt = order.updatedAt.toISOString();
+  if (order.paidAt) orderObj.paidAt = order.paidAt.toISOString();
+  if (order.deliveredAt) orderObj.deliveredAt = order.deliveredAt.toISOString();
+
+  res.json(orderObj);
+});
+

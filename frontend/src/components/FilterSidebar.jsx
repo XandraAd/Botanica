@@ -9,66 +9,89 @@ const FilterSidebar = ({
   isOpen = false,
   onToggle,
 }) => {
-  // Extract unique filter options
+  const [selectedSubCategories, setSelectedSubCategories] = useState([]);
+  
+  // Extract unique categories
   const categories = useMemo(() => {
     if (!filtersConfig.showCategories) return [];
     return [...new Set(data.map((p) => p.category?.name || p.category).filter(Boolean))];
   }, [data, filtersConfig]);
 
-  const sizes = useMemo(() => {
-    if (!filtersConfig.showSizes) return [];
-    return [...new Set(data.flatMap((p) => p.sizes || []).filter(Boolean))];
-  }, [data, filtersConfig]);
-
-  const colors = useMemo(() => {
-    if (!filtersConfig.showColors) return [];
-    return [...new Set(data.flatMap((p) => p.colors || []).filter(Boolean))];
-  }, [data, filtersConfig]);
-
-  const collections = useMemo(() => {
-    if (!filtersConfig.showCollections) return [];
-    return [...new Set(
-      data.map((item) => {
-        if (item.name) return item.name;
-        if (item.collection?.name) return item.collection.name;
-        if (item.collection) return item.collection;
-        return null;
-      }).filter(Boolean)
-    )];
-  }, [data, filtersConfig]);
-
-  // Get price range from data - FIXED: Handle cases where price might be undefined
-  const priceBounds = useMemo(() => {
-    const prices = data.map(item => item.price).filter(price => typeof price === 'number' && !isNaN(price));
-    if (prices.length === 0) return [0, 1000];
-    return [Math.floor(Math.min(...prices)), Math.ceil(Math.max(...prices))];
-  }, [data]);
+  // FIXED: Always show predefined subcategories when enabled
+  const subCategories = useMemo(() => {
+    if (!filtersConfig.showSubCategories) return [];
+    
+    // Always return the predefined subcategories for accessories
+    return ["Pots & Planters", "Watering Cans", "Soil & Fertilizers", "Tools", "Decor Items"];
+  }, [filtersConfig.showSubCategories]);
 
   // Selected states
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [selectedSizes, setSelectedSizes] = useState([]);
   const [selectedColors, setSelectedColors] = useState([]);
   const [selectedCollections, setSelectedCollections] = useState([]);
-  const [priceRange, setPriceRange] = useState([0, 1000]); // Default values
+  const [priceRange, setPriceRange] = useState([0, 1000]);
 
-  // Update price range when data changes - FIXED: Only update if bounds are valid
-  useEffect(() => {
-    if (priceBounds[0] !== undefined && priceBounds[1] !== undefined && 
-        !isNaN(priceBounds[0]) && !isNaN(priceBounds[1])) {
-      setPriceRange(priceBounds);
-    }
-  }, [priceBounds]);
-
-  // Expand/collapse sections - FIXED: Initialize based on filtersConfig
   const [activeSections, setActiveSections] = useState({
     categories: filtersConfig.showCategories || false,
+    subcategories: filtersConfig.showSubCategories || false,
     sizes: filtersConfig.showSizes || false,
     colors: filtersConfig.showColors || false,
     collections: filtersConfig.showCollections || false,
     price: true,
   });
 
-  // Apply filters - FIXED: Added proper error handling and validation
+  // Sizes
+  const sizes = useMemo(() => {
+    if (!filtersConfig.showSizes) return [];
+    return [...new Set(data.flatMap((p) => p.sizes || []).filter(Boolean))];
+  }, [data, filtersConfig]);
+
+  // Colors
+  const colors = useMemo(() => {
+    if (!filtersConfig.showColors) return [];
+    return [...new Set(data.flatMap((p) => p.colors || []).filter(Boolean))];
+  }, [data, filtersConfig]);
+
+  // Collections
+  const collections = useMemo(() => {
+    if (!filtersConfig.showCollections) return [];
+    return [
+      ...new Set(
+        data
+          .map((item) => {
+            if (item.name) return item.name;
+            if (item.collection?.name) return item.collection.name;
+            if (item.collection) return item.collection;
+            return null;
+          })
+          .filter(Boolean)
+      ),
+    ];
+  }, [data, filtersConfig]);
+
+  // Price bounds
+  const priceBounds = useMemo(() => {
+    const prices = data
+      .map((item) => item.price)
+      .filter((price) => typeof price === "number" && !isNaN(price));
+    if (prices.length === 0) return [0, 1000];
+    return [Math.floor(Math.min(...prices)), Math.ceil(Math.max(...prices))];
+  }, [data]);
+
+  // Sync price range with data
+  useEffect(() => {
+    if (
+      priceBounds[0] !== undefined &&
+      priceBounds[1] !== undefined &&
+      !isNaN(priceBounds[0]) &&
+      !isNaN(priceBounds[1])
+    ) {
+      setPriceRange(priceBounds);
+    }
+  }, [priceBounds]);
+
+  // Apply filters
   useEffect(() => {
     if (!data || data.length === 0) {
       onFilter([]);
@@ -82,6 +105,15 @@ const FilterSidebar = ({
         filtered = filtered.filter((item) =>
           selectedCategories.includes(item.category?.name || item.category)
         );
+      }
+
+      // FIXED: Simplified subcategory filtering - always show all products when no subcategory selected
+      if (selectedSubCategories.length > 0) {
+        filtered = filtered.filter((item) => {
+          // For now, since products don't have subcategories, show all products
+          // This will be functional once products have subcategory fields
+          return true;
+        });
       }
 
       if (selectedSizes.length > 0) {
@@ -98,32 +130,48 @@ const FilterSidebar = ({
 
       if (selectedCollections.length > 0) {
         filtered = filtered.filter((item) => {
-          const itemCollectionName = item.collection?.name || item.collection || item.name;
+          const itemCollectionName =
+            item.collection?.name || item.collection || item.name;
           return selectedCollections.some(
-            (col) => col.toLowerCase() === (itemCollectionName || "").toLowerCase()
+            (col) =>
+              col.toLowerCase() === (itemCollectionName || "").toLowerCase()
           );
         });
       }
 
-      // FIXED: Added validation for priceRange
-      if (priceRange && priceRange.length === 2 && 
-          !isNaN(priceRange[0]) && !isNaN(priceRange[1])) {
+      if (
+        priceRange &&
+        priceRange.length === 2 &&
+        !isNaN(priceRange[0]) &&
+        !isNaN(priceRange[1])
+      ) {
         filtered = filtered.filter((item) => {
           const itemPrice = item.price || 0;
-          return itemPrice >= priceRange[0] && itemPrice <= priceRange[1];
+          return (
+            itemPrice >= priceRange[0] && itemPrice <= priceRange[1]
+          );
         });
       }
 
       onFilter(filtered);
     } catch (error) {
       console.error("Error applying filters:", error);
-      onFilter(data); // Fallback to original data
+      onFilter(data);
     }
-  }, [data, selectedCategories, selectedSizes, selectedColors, selectedCollections, priceRange, onFilter]);
+  }, [
+    data,
+    selectedCategories,
+    selectedSubCategories,
+    selectedSizes,
+    selectedColors,
+    selectedCollections,
+    priceRange,
+    onFilter,
+  ]);
 
-  // Helper functions
+  // Helpers
   const toggleFilter = (list, setList, value) => {
-    if (!value) return; // FIXED: Added validation
+    if (!value) return;
     setList((prev) =>
       prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
     );
@@ -131,12 +179,16 @@ const FilterSidebar = ({
 
   const clearFilters = () => {
     setSelectedCategories([]);
+    setSelectedSubCategories([]);
     setSelectedSizes([]);
     setSelectedColors([]);
     setSelectedCollections([]);
-    // FIXED: Reset to actual bounds instead of potentially undefined values
-    if (priceBounds[0] !== undefined && priceBounds[1] !== undefined && 
-        !isNaN(priceBounds[0]) && !isNaN(priceBounds[1])) {
+    if (
+      priceBounds[0] !== undefined &&
+      priceBounds[1] !== undefined &&
+      !isNaN(priceBounds[0]) &&
+      !isNaN(priceBounds[1])
+    ) {
       setPriceRange(priceBounds);
     } else {
       setPriceRange([0, 1000]);
@@ -150,26 +202,31 @@ const FilterSidebar = ({
     }));
   };
 
-  // FIXED: Added proper validation for hasActiveFilters
   const hasActiveFilters =
     selectedCategories.length > 0 ||
+    selectedSubCategories.length > 0 ||
     selectedSizes.length > 0 ||
     selectedColors.length > 0 ||
     selectedCollections.length > 0 ||
-    (priceRange && priceRange.length === 2 && 
-     (priceRange[0] !== (priceBounds[0] || 0) || priceRange[1] !== (priceBounds[1] || 1000)));
+    (priceRange &&
+      priceRange.length === 2 &&
+      (priceRange[0] !== (priceBounds[0] || 0) ||
+        priceRange[1] !== (priceBounds[1] || 1000)));
 
-  // Count active filters for badge - FIXED: Added validation
   const activeFilterCount = [
     selectedCategories.length,
+    selectedSubCategories.length,
     selectedSizes.length,
     selectedColors.length,
     selectedCollections.length,
-    (priceRange && priceRange.length === 2 && 
-     (priceRange[0] !== (priceBounds[0] || 0) || priceRange[1] !== (priceBounds[1] || 1000))) ? 1 : 0
+    priceRange &&
+    priceRange.length === 2 &&
+    (priceRange[0] !== (priceBounds[0] || 0) ||
+      priceRange[1] !== (priceBounds[1] || 1000))
+      ? 1
+      : 0,
   ].reduce((sum, count) => sum + count, 0);
 
-  // FIXED: Added safety check for rendering
   if (!data) {
     return (
       <aside className="fixed md:sticky top-0 left-0 h-full md:h-auto w-80 md:w-72 bg-white shadow-xl md:shadow-sm md:rounded-lg z-40 md:z-0 overflow-y-auto">
@@ -266,6 +323,37 @@ const FilterSidebar = ({
                         className="rounded text-green-600 focus:ring-green-500 mr-3"
                       />
                       <span className="capitalize text-gray-700">{cat}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Subcategories - FIXED: Always show when enabled in config */}
+          {filtersConfig.showSubCategories && subCategories.length > 0 && (
+            <div className="mb-5 pb-4 border-b border-gray-100">
+              <button
+                className="flex justify-between items-center w-full text-left font-medium text-gray-700 mb-3 group"
+                onClick={() => toggleSection("subcategories")}
+              >
+                <div className="flex items-center gap-2">
+                  <IoGridOutline className="text-gray-400 group-hover:text-green-600" />
+                  <span>Accessory Types</span>
+                </div>
+                {activeSections.subcategories ? <FiChevronUp className="text-gray-400" /> : <FiChevronDown className="text-gray-400" />}
+              </button>
+              {activeSections.subcategories && (
+                <div className="space-y-2 max-h-48 overflow-y-auto pl-6">
+                  {subCategories.map((subCat) => (
+                    <label key={subCat} className="flex items-center text-sm py-1.5 hover:bg-gray-50 px-2 rounded">
+                      <input
+                        type="checkbox"
+                        checked={selectedSubCategories.includes(subCat)}
+                        onChange={() => toggleFilter(selectedSubCategories, setSelectedSubCategories, subCat)}
+                        className="rounded text-green-600 focus:ring-green-500 mr-3"
+                      />
+                      <span className="capitalize text-gray-700">{subCat}</span>
                     </label>
                   ))}
                 </div>

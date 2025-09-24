@@ -4,6 +4,7 @@ import { IoClose } from "react-icons/io5";
 
 const GreenHouse = () => {
   const [isPlaying, setIsPlaying] = useState(false);
+    const BASE_URL = import.meta.env.VITE_BASE_URL;
 
   return (
     <section className="w-full bg-lime-50 py-16">
@@ -14,11 +15,12 @@ const GreenHouse = () => {
           {!isPlaying ? (
             <>
               {/* Thumbnail Image */}
-              <img
-                src="http://localhost:5000/assets/plant-bn-5.webp"
-                alt="GreenHouse Video Thumbnail"
-                className="w-full h-full object-cover"
-              />
+           <img
+  src={`${BASE_URL}/assets/plant-bn-5.webp`}
+  alt="GreenHouse Video Thumbnail"
+  className="w-full h-full object-cover"
+/>
+
               {/* Play Button Overlay */}
               <button
                 onClick={() => setIsPlaying(true)}

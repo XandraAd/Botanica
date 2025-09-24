@@ -28,4 +28,4 @@ export const {
   setBrands, setColors, setSizes, resetFilters
 } = filtersSlice.actions;
 
-export default filtersSlice.reducer;
+export default filtersSlic.reducer;

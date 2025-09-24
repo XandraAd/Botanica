@@ -9,6 +9,9 @@ const productSchema = new mongoose.Schema({
   images: [{ type: String, required: true }],
 
   category: { type: mongoose.Schema.Types.ObjectId, ref: "Category", required: true },
+  subcategory: { type: String, trim: true },
+    sale: { type: Boolean, default: false }, // ✅ new flag
+    salePrice: { type: Number }, // ✅ optional, discounted price
 
   sizes: [{ type: String }],
   colors: [{ type: String }],

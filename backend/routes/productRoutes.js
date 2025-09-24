@@ -16,6 +16,7 @@ import {
   filterProducts,
   addProductJson,
   getProductsByCategory,
+  getSaleProducts,
 } from "../controllers/productController.js";
 
 import { protect, admin } from "../middlewares/authMiddleware.js";
@@ -107,6 +108,9 @@ router.get("/category/:slug", getProductsByCategory);
 router
   .route("/")
   .post(protect, admin, upload.single("image"), addProduct);
+
+
+router.get("/sale", getSaleProducts);
 
 router
   .route("/:id")

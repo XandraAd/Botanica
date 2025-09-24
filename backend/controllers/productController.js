@@ -317,10 +317,27 @@ export const getProductsByCategory = async (req, res) => {
 
     // fetch products in this category
     const products = await Product.find({ category: category._id });
-
-    res.json({ products });
+const subcategories = [...new Set(products.map(p => p.subcategory).filter(Boolean))];
+    res.json({ products,subcategories });
   } catch (error) {
     console.error("Error fetching category products:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
+
+// Fetch Sale products
+export const getSaleProducts = async (req, res) => {
+  try {
+    const products = await Product.find({ sale: true });
+
+    if (!products.length) {
+      return res.status(404).json({ message: "No sale products found" });
+    }
+
+    res.json({ products });
+  } catch (error) {
+    console.error("❌ Error fetching sale products:", error);
+    res.status(500).json({ message: "Server error fetching sale products" });
+  }
+};
+

@@ -3,24 +3,25 @@ import { FaLeaf, FaTruck, FaShieldAlt } from 'react-icons/fa';
 import DisplayedReviews from './DisplayedReviews';
 
 const FeaturedIn = () => {
+   const BASE_URL = import.meta.env.VITE_BASE_URL;
   const featuredPublications = [
     {
-      src: "http://localhost:5000/assets/featuredImages/bloom.jpg",
+      src: `${BASE_URL}/assets/featuredImages/bloom.jpg`,
       alt: "Bloom Magazine",
       name: "Bloom Magazine"
     },
     {
-      src: "http://localhost:5000/assets/featuredImages/spruce.jpg", 
+      src: `${BASE_URL}/assets/featuredImages/spruce.jpg`, 
       alt: "The Spruce",
       name: "The Spruce"
     },
     {
-      src: "http://localhost:5000/assets/featuredImages/bloomscape.png",
+      src: `${BASE_URL}/assets/featuredImages/bloomscape.png`,
       alt: "Bloomscape",
       name: "Bloomscape"
     },
     {
-      src: "http://localhost:5000/assets/featuredImages/gardenersWorld.png",
+      src: `${BASE_URL}assets/featuredImages/gardenersWorld.png`,
       alt: "Gardeners World",
       name:"Gardeners World"
     }

@@ -1,33 +1,33 @@
-import React, { useState, useEffect } from 'react';
-import { FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
-import { useSelector } from 'react-redux';
+import React, { useState, useEffect } from "react";
+import { FaCheckCircle, FaExclamationTriangle } from "react-icons/fa";
+import { useSelector } from "react-redux";
 import axios from "axios";
-import { useNavigate } from 'react-router-dom';
-import AddressForm from './Orders/AddressForm';
-import { useAddAddressMutation } from '../slices/UsersSlice'; 
-import { toast } from 'react-toastify';
-import { ORDERS_URL, ADDRESSES_URL, API_URL } from '../store/constants';
+import { useNavigate } from "react-router-dom";
+import AddressForm from "./Orders/AddressForm";
+import { useAddAddressMutation } from "../slices/UsersSlice";
+import { toast } from "react-toastify";
+import { ORDERS_URL, ADDRESSES_URL, API_URL } from "../store/constants";
 
 const CheckoutPage = () => {
   const [hasCoupon, setHasCoupon] = useState(false);
-  const [couponCode, setCouponCode] = useState('');
-  const [error, setError] = useState('');
+  const [couponCode, setCouponCode] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [ghsTotal, setGhsTotal] = useState(null); // GHS total for Paystack
   const [formData, setFormData] = useState({
-    FirstName: '',
-    LastName: '',
-    CompanyName: '',
-    Country: 'United States (US)',
-    StreetAddress: '',
-    Apartment: '',
-    City: '',
-    State: '',
-    ZipCode: '',
-    Email: '',
-    Phone: '',
-    paymentMethod: '',
-    shipToDifferent: false
+    FirstName: "",
+    LastName: "",
+    CompanyName: "",
+    Country: "United States (US)",
+    StreetAddress: "",
+    Apartment: "",
+    City: "",
+    State: "",
+    ZipCode: "",
+    Email: "",
+    Phone: "",
+    paymentMethod: "",
+    shipToDifferent: false,
   });
 
   const { cartItems } = useSelector((state) => state.cart);
@@ -43,20 +43,30 @@ const CheckoutPage = () => {
   const total = subtotal + shipping;
 
   useEffect(() => {
-    if (!userInfo) setError('Please log in to place an order.');
-    else setError('');
+    if (!userInfo) setError("Please log in to place an order.");
+    else setError("");
   }, [userInfo]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData({ ...formData, [name]: type === 'checkbox' ? checked : value });
+    setFormData({ ...formData, [name]: type === "checkbox" ? checked : value });
   };
 
   const validateForm = () => {
-    const requiredFields = ['FirstName', 'LastName', 'StreetAddress', 'City', 'ZipCode', 'Email', 'Phone'];
-    const missingFields = requiredFields.filter(field => !formData[field]);
+    const requiredFields = [
+      "FirstName",
+      "LastName",
+      "StreetAddress",
+      "City",
+      "ZipCode",
+      "Email",
+      "Phone",
+    ];
+    const missingFields = requiredFields.filter((field) => !formData[field]);
     if (missingFields.length > 0) {
-      setError(`Please fill in all required fields: ${missingFields.join(', ')}`);
+      setError(
+        `Please fill in all required fields: ${missingFields.join(", ")}`
+      );
       return false;
     }
     if (!formData.paymentMethod) {
@@ -102,7 +112,7 @@ const CheckoutPage = () => {
 
     try {
       const orderPayload = {
-        orderItems: cartItems.map(item => ({
+        orderItems: cartItems.map((item) => ({
           _id: item._id,
           name: item.name,
           qty: item.quantity,
@@ -134,6 +144,8 @@ const CheckoutPage = () => {
           `${API_URL}/payment/initialize`,
           {
             ...orderPayload,
+            amount: total, // ✅ Add this
+            email: formData.Email, // ✅ required for Paystack
             reference: `ref-${Date.now()}`,
           },
           { withCredentials: true }
@@ -143,17 +155,19 @@ const CheckoutPage = () => {
         window.location.href = data.authUrl; // redirect to Paystack
       } else {
         // Card or COD orders
-        const { data } = await axios.post(
-          ORDERS_URL,
-          orderPayload,
-          { headers: { "Content-Type": "application/json" }, withCredentials: true }
-        );
+        const { data } = await axios.post(ORDERS_URL, orderPayload, {
+          headers: { "Content-Type": "application/json" },
+          withCredentials: true,
+        });
         toast.success("✅ Order placed successfully!");
         navigate("/order-confirmation", { state: { order: data } });
       }
     } catch (err) {
       console.error("Order error:", err.response?.data || err.message);
-      setError(err.response?.data?.message || "Failed to place order. Please try again.");
+      setError(
+        err.response?.data?.message ||
+          "Failed to place order. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -181,49 +195,106 @@ const CheckoutPage = () => {
           <div className="w-full lg:w-7/12">
             {/* Coupon */}
             <div className="bg-white p-6 rounded-lg shadow-md mb-6">
-              <div className="flex items-center cursor-pointer" onClick={() => setHasCoupon(!hasCoupon)}>
-                <span className="text-green-600 mr-2"><FaCheckCircle /></span>
-                <h2 className="text-lg font-medium text-gray-900">Have a coupon? Enter your code</h2>
+              <div
+                className="flex items-center cursor-pointer"
+                onClick={() => setHasCoupon(!hasCoupon)}
+              >
+                <span className="text-green-600 mr-2">
+                  <FaCheckCircle />
+                </span>
+                <h2 className="text-lg font-medium text-gray-900">
+                  Have a coupon? Enter your code
+                </h2>
               </div>
               {hasCoupon && (
                 <form onSubmit={handleCouponSubmit} className="mt-4 flex">
-                  <input type="text" value={couponCode} onChange={(e) => setCouponCode(e.target.value)}
+                  <input
+                    type="text"
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value)}
                     placeholder="Coupon code"
                     className="flex-1 px-4 py-2 border border-gray-300 rounded-l-md focus:ring-2 focus:ring-green-500 focus:outline-none"
                   />
-                  <button type="submit" className="px-4 py-2 bg-green-600 text-white font-medium rounded-r-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">Apply</button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-green-600 text-white font-medium rounded-r-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  >
+                    Apply
+                  </button>
                 </form>
               )}
             </div>
 
             {/* Billing Details */}
-            <AddressForm formData={formData} onChange={handleInputChange} mode='order' onSubmit={handleSaveAddress} />
+            <AddressForm
+              formData={formData}
+              onChange={handleInputChange}
+              mode="order"
+              onSubmit={handleSaveAddress}
+            />
 
             {/* Ship to different */}
             <div className="bg-white p-6 rounded-lg shadow-md mt-6">
               <label className="flex items-center space-x-2">
-                <input type="checkbox" name="shipToDifferent" checked={formData.shipToDifferent} onChange={handleInputChange} className="text-green-600"/>
+                <input
+                  type="checkbox"
+                  name="shipToDifferent"
+                  checked={formData.shipToDifferent}
+                  onChange={handleInputChange}
+                  className="text-green-600"
+                />
                 <span>Ship to a different address?</span>
               </label>
-              {formData.shipToDifferent && <div className="mt-4"><AddressForm formData={formData} onChange={handleInputChange} prefix="shipping" /></div>}
+              {formData.shipToDifferent && (
+                <div className="mt-4">
+                  <AddressForm
+                    formData={formData}
+                    onChange={handleInputChange}
+                    prefix="shipping"
+                  />
+                </div>
+              )}
             </div>
           </div>
 
           {/* Right Column */}
           <div className="w-full lg:w-5/12">
             <div className="bg-white p-6 rounded-lg shadow-md sticky top-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Your order</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-6">
+                Your order
+              </h2>
 
-              {subtotal >= 100 && <div className="bg-green-50 p-4 rounded-md mb-6 flex items-center"><span className="text-green-600 mr-2"><FaCheckCircle/></span><p className="text-green-800 font-medium">Congratulations! You have got free shipping!</p></div>}
+              {subtotal >= 100 && (
+                <div className="bg-green-50 p-4 rounded-md mb-6 flex items-center">
+                  <span className="text-green-600 mr-2">
+                    <FaCheckCircle />
+                  </span>
+                  <p className="text-green-800 font-medium">
+                    Congratulations! You have got free shipping!
+                  </p>
+                </div>
+              )}
 
               {/* Cart Items */}
               <div className="border-b border-gray-200 pb-4 mb-4">
-                {cartItems.length === 0 ? <p className="text-gray-500">Your cart is empty.</p> : cartItems.map(item => (
-                  <div key={`${item._id}-${item.size}`} className="flex justify-between items-center mb-2">
-                    <span>{item.name} {item.size && `- ${item.size}`} × {item.quantity}</span>
-                    <span>${(Number(item.price) * item.quantity).toFixed(2)}</span>
-                  </div>
-                ))}
+                {cartItems.length === 0 ? (
+                  <p className="text-gray-500">Your cart is empty.</p>
+                ) : (
+                  cartItems.map((item) => (
+                    <div
+                      key={`${item._id}-${item.size}`}
+                      className="flex justify-between items-center mb-2"
+                    >
+                      <span>
+                        {item.name} {item.size && `- ${item.size}`} ×{" "}
+                        {item.quantity}
+                      </span>
+                      <span>
+                        ${(Number(item.price) * item.quantity).toFixed(2)}
+                      </span>
+                    </div>
+                  ))
+                )}
                 <div className="flex justify-between items-center font-medium text-gray-900 pt-2 border-t">
                   <span>Subtotal</span>
                   <span>${subtotal.toFixed(2)}</span>
@@ -233,39 +304,64 @@ const CheckoutPage = () => {
               {/* Shipping */}
               <div className="border-b border-gray-200 pb-4 mb-4">
                 <h3 className="font-medium text-gray-900 mb-2">Shipping</h3>
-                <p className="text-gray-700">{shipping === 0 ? 'Free shipping' : `$${shipping.toFixed(2)}`}</p>
+                <p className="text-gray-700">
+                  {shipping === 0 ? "Free shipping" : `$${shipping.toFixed(2)}`}
+                </p>
               </div>
 
               {/* Total */}
               <div className="flex justify-between items-center font-bold text-lg text-gray-900 mb-6">
                 <span>Total</span>
-                <span>${total.toFixed(2)} {ghsTotal && `(~GHS ${ghsTotal.toFixed(2)})`}</span>
+                <span>
+                  ${total.toFixed(2)}{" "}
+                  {ghsTotal && `(~GHS ${ghsTotal.toFixed(2)})`}
+                </span>
               </div>
 
               {/* Payment Methods */}
               <div className="bg-white p-6 rounded-lg shadow-md mt-6">
                 <h3 className="font-bold text-gray-900 mb-4">Payment Method</h3>
-                {['card','paystack','cod'].map(method => (
-                  <label key={method} className="flex items-center space-x-2 mb-2 cursor-pointer">
-                    <input type="radio" name="paymentMethod" value={method} checked={formData.paymentMethod===method} onChange={handleInputChange} className="text-green-600 focus:ring-green-500"/>
-                    <span>{method==='card'?'Credit/Debit Card':method==='paystack'?'Paystack':'Cash on Delivery'}</span>
+                {["card", "paystack", "cod"].map((method) => (
+                  <label
+                    key={method}
+                    className="flex items-center space-x-2 mb-2 cursor-pointer"
+                  >
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value={method}
+                      checked={formData.paymentMethod === method}
+                      onChange={handleInputChange}
+                      className="text-green-600 focus:ring-green-500"
+                    />
+                    <span>
+                      {method === "card"
+                        ? "Credit/Debit Card"
+                        : method === "paystack"
+                        ? "Paystack"
+                        : "Cash on Delivery"}
+                    </span>
                   </label>
                 ))}
               </div>
 
-              <button 
-                onClick={handlePlaceOrder} 
-                disabled={!userInfo || loading || cartItems.length===0}
+              <button
+                onClick={handlePlaceOrder}
+                disabled={!userInfo || loading || cartItems.length === 0}
                 className={`w-full py-3 px-4 rounded-md font-medium focus:outline-none focus:ring-2 focus:ring-green-500 mt-4 ${
-                  !userInfo || loading || cartItems.length===0
-                    ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
-                    : 'bg-green-600 text-white hover:bg-green-700'
+                  !userInfo || loading || cartItems.length === 0
+                    ? "bg-gray-400 text-gray-700 cursor-not-allowed"
+                    : "bg-green-600 text-white hover:bg-green-700"
                 }`}
               >
-                {loading ? 'Processing...' : 'Place Order'}
+                {loading ? "Processing..." : "Place Order"}
               </button>
 
-              {!userInfo && <p className="text-red-500 text-sm mt-2">Please log in to place an order.</p>}
+              {!userInfo && (
+                <p className="text-red-500 text-sm mt-2">
+                  Please log in to place an order.
+                </p>
+              )}
             </div>
           </div>
         </div>
