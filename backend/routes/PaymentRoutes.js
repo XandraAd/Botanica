@@ -72,19 +72,26 @@ router.post("/initialize", protect, async (req, res) => {
       isPaid: false,
     });
 
-    // Initialize Paystack transaction
-    const paystackRes = await axios.post(
-      "https://api.paystack.co/transaction/initialize",
-      {
-        email,
-        amount: paystackAmount,
-        currency: "GHS",
-        reference,
-        callback_url: `${BASE_URL}/api/payment/callback`, // ✅ dynamic
-        metadata: { orderId: order._id.toString(), userId: req.user._id },
-      },
-      { headers: { Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}` } }
-    );
+   // Initialize Paystack transaction
+const paystackRes = await axios.post(
+  "https://api.paystack.co/transaction/initialize",
+  {
+    email,
+    amount: paystackAmount,
+    currency: "GHS",
+    reference,
+    callback_url: `${process.env.BASE_URL}/api/payment/callback`, // ✅ backend URL from .env
+    metadata: { orderId: order._id.toString(), userId: req.user._id },
+  },
+  {
+    headers: {
+      Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+    },
+  }
+);
+
+res.json(paystackRes.data);
+
 
     res.json({
       success: true,
@@ -225,37 +232,46 @@ router.get("/order/:id", async (req, res) => {
 
 router.get("/callback", async (req, res) => {
   const { reference } = req.query;
+  const clientUrl = process.env.CLIENT_URL || "http://localhost:5173"; // fallback for dev
 
   try {
     const paystackRes = await axios.get(
       `https://api.paystack.co/transaction/verify/${reference}`,
-      { headers: { Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}` } }
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+        },
+      }
     );
 
     if (paystackRes.data.data.status === "success") {
       // ✅ update order
       const orderId = paystackRes.data.data.metadata.orderId;
       const order = await Order.findById(orderId);
-      order.isPaid = true;
-      order.paidAt = new Date();
-      await order.save();
 
-      // ✅ Redirect user back to frontend with status
+      if (order) {
+        order.isPaid = true;
+        order.paidAt = new Date();
+        await order.save();
+      }
+
+      // ✅ redirect back to frontend with status
       return res.redirect(
-        `${FRONTEND_URL}/payment-success?reference=${reference}&status=success`
+        `${clientUrl}/payment-success?reference=${reference}&status=success`
       );
     } else {
       return res.redirect(
-        `${FRONTEND_URL}/payment-failed?reference=${reference}&status=failed`
+        `${clientUrl}/payment-failed?reference=${reference}&status=failed`
       );
     }
   } catch (err) {
     console.error("Callback error:", err.message);
     return res.redirect(
-      `${FRONTEND_URL}/payment-failed?reference=${reference}&status=error`
+      `${clientUrl}/payment-failed?reference=${reference}&status=error`
     );
   }
 });
+
 
 // routes/products.js
 router.post("/:id/review", protect, async (req, res) => {
