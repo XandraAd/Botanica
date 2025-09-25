@@ -144,12 +144,19 @@ const CheckoutPage = () => {
           `${API_URL}/payment/initialize`,
           {
             ...orderPayload,
-            amount: total, // ✅ Add this
-            email: formData.Email, // ✅ required for Paystack
+            amount: total,
+            email: formData.Email,
             reference: `ref-${Date.now()}`,
           },
           { withCredentials: true }
         );
+
+        console.log("Paystack init response:", data);
+
+        if (!data.authUrl) {
+          setError("Payment initialization failed. Please try again.");
+          return;
+        }
 
         setGhsTotal(data.amountInGhs);
         window.location.href = data.authUrl; // redirect to Paystack
@@ -159,6 +166,7 @@ const CheckoutPage = () => {
           headers: { "Content-Type": "application/json" },
           withCredentials: true,
         });
+
         toast.success("✅ Order placed successfully!");
         navigate("/order-confirmation", { state: { order: data } });
       }

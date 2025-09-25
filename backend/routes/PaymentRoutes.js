@@ -55,7 +55,7 @@ router.post("/initialize", protect, async (req, res) => {
     amountInGhs = Number(amountInGhs);
 
     if (isNaN(amountInGhs) || amountInGhs <= 0) {
-      amountInGhs = 1; // Ensure at least 1 GHS
+      amountInGhs = 1; // fallback
     }
 
     // Paystack expects integer amount in kobo
@@ -72,27 +72,25 @@ router.post("/initialize", protect, async (req, res) => {
       isPaid: false,
     });
 
-   // Initialize Paystack transaction
-const paystackRes = await axios.post(
-  "https://api.paystack.co/transaction/initialize",
-  {
-    email,
-    amount: paystackAmount,
-    currency: "GHS",
-    reference,
-    callback_url: `${process.env.BASE_URL}/api/payment/callback`, 
-    metadata: { orderId: order._id.toString(), userId: req.user._id },
-  },
-  {
-    headers: {
-      Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-    },
-  }
-);
+    // Initialize Paystack transaction
+    const paystackRes = await axios.post(
+      "https://api.paystack.co/transaction/initialize",
+      {
+        email,
+        amount: paystackAmount,
+        currency: "GHS",
+        reference,
+        callback_url: `${process.env.BASE_URL}/api/payment/callback`, // backend URL
+        metadata: { orderId: order._id.toString(), userId: req.user._id },
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+        },
+      }
+    );
 
-res.json(paystackRes.data);
-
-
+    // ✅ Only one response to frontend
     res.json({
       success: true,
       authUrl: paystackRes.data.data.authorization_url,
@@ -109,6 +107,7 @@ res.json(paystackRes.data);
     });
   }
 });
+
 
 router.get("/verify/:reference", async (req, res) => {
   const { reference } = req.params;
