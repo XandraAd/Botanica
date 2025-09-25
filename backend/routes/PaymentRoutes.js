@@ -80,7 +80,7 @@ const paystackRes = await axios.post(
     amount: paystackAmount,
     currency: "GHS",
     reference,
-    callback_url: `${process.env.CLIENT_URL}/api/payment/callback`, 
+    callback_url: `${process.env.BASE_URL}/api/payment/callback`, 
     metadata: { orderId: order._id.toString(), userId: req.user._id },
   },
   {
