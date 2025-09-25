@@ -113,7 +113,7 @@ router.get("/verify/:reference", async (req, res) => {
   const { reference } = req.params;
 
   try {
-    // Verify payment with Paystack
+    // ✅ Verify payment with Paystack
     const paystackRes = await axios.get(
       `https://api.paystack.co/transaction/verify/${reference}`,
       { headers: { Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}` } }
@@ -127,24 +127,29 @@ router.get("/verify/:reference", async (req, res) => {
       const userIdFromPaystack = payData.metadata?.userId;
 
       if (!orderId) {
-        return res.status(400).json({ success: false, error: "No orderId found in Paystack metadata" });
+        return res
+          .status(400)
+          .json({ success: false, error: "No orderId found in Paystack metadata" });
       }
 
-      // Load the order
+      // ✅ Load order
       const order = await Order.findById(orderId).populate("user", "name email");
       if (!order) {
-        return res.status(404).json({ success: false, error: "Order not found for orderId: " + orderId });
+        return res
+          .status(404)
+          .json({ success: false, error: "Order not found for orderId: " + orderId });
       }
 
-      // Extract userId safely
-      const orderUserId = order.user?._id ? order.user._id.toString() : order.user.toString();
+      const orderUserId = order.user?._id?.toString?.() || order.user.toString();
 
-      // Security check: metadata userId must match order.user
+      // ✅ Security check
       if (userIdFromPaystack && orderUserId !== userIdFromPaystack) {
-        return res.status(403).json({ success: false, error: "Not authorized for this order" });
+        return res
+          .status(403)
+          .json({ success: false, error: "Not authorized for this order" });
       }
 
-      // ✅ Update order
+      // ✅ Update order (fast write)
       order.isPaid = true;
       order.paidAt = new Date(payData.paid_at || Date.now());
       order.paymentResult = {
@@ -155,59 +160,76 @@ router.get("/verify/:reference", async (req, res) => {
       };
       await order.save();
 
-      // ✅ Clear cart
-      try {
-        await Cart.findOneAndUpdate({ user: orderUserId }, { $set: { cartItems: [] } });
-        console.log("Cart cleared successfully for user:", orderUserId);
-      } catch (cartError) {
-        console.error("Error clearing cart:", cartError.message);
-      }
-
-      // ✅ Send confirmation email
-      try {
-        const itemsList = order.orderItems.map(
-          (item) => `<li>${item.qty} × ${item.name} — $${(item.qty * item.price).toFixed(2)}</li>`
-        ).join("");
-
-        const emailHtml = `
-          <h2>Thank you for your order, ${order.user.name} 🌱</h2>
-          <p>Your payment has been confirmed.</p>
-          <h3>Order Summary</h3>
-          <ul>${itemsList}</ul>
-          <p><strong>Total Paid:</strong> $${order.totalPrice.toFixed(2)}</p>
-          <p>We’ll notify you when your items are shipped.</p>
-        `;
-
-        await sendEmail({
-          to: order.user.email,
-          subject: "Order Confirmation - Botanica",
-          html: emailHtml,
-        });
-      } catch (emailError) {
-        console.error("Error sending email:", emailError.message);
-      }
-
-      return res.json({
+      // 🚀 Respond immediately (frontend gets data fast)
+      res.json({
         success: true,
-        message: "Payment verified, order updated, cart cleared",
+        message: "Payment verified, processing extras in background",
         order,
       });
+
+      // ⏳ Do slow stuff in background (doesn’t block frontend)
+      setImmediate(async () => {
+        try {
+          // Clear cart
+          await Cart.findOneAndUpdate(
+            { user: orderUserId },
+            { $set: { cartItems: [] } }
+          );
+          console.log("Cart cleared for user:", orderUserId);
+
+          // Send email
+          const itemsList = order.orderItems
+            .map(
+              (item) =>
+                `<li>${item.qty} × ${item.name} — $${(
+                  item.qty * item.price
+                ).toFixed(2)}</li>`
+            )
+            .join("");
+
+          const emailHtml = `
+            <h2>Thank you for your order, ${order.user.name} 🌱</h2>
+            <p>Your payment has been confirmed.</p>
+            <h3>Order Summary</h3>
+            <ul>${itemsList}</ul>
+            <p><strong>Total Paid:</strong> $${order.totalPrice.toFixed(2)}</p>
+            <p>We’ll notify you when your items are shipped.</p>
+          `;
+
+          await sendEmail({
+            to: order.user.email,
+            subject: "Order Confirmation - Botanica",
+            html: emailHtml,
+          });
+          console.log("Confirmation email sent to", order.user.email);
+        } catch (bgError) {
+          console.error("Background task error:", bgError.message);
+        }
+      });
+      return;
     }
 
-    // Not successful
+    // ❌ Payment not successful
     return res.status(400).json({
       success: false,
       message: "Payment not successful",
       paystackStatus: verification.data?.status,
     });
   } catch (err) {
-    console.error("Payment verification error:", err.response?.data || err.message);
+    console.error(
+      "Payment verification error:",
+      err.response?.data || err.message
+    );
 
     if (err.response?.status === 404) {
-      return res.status(404).json({ success: false, error: "Payment reference not found" });
+      return res
+        .status(404)
+        .json({ success: false, error: "Payment reference not found" });
     }
     if (err.response?.status === 401) {
-      return res.status(401).json({ success: false, error: "Invalid Paystack API key" });
+      return res
+        .status(401)
+        .json({ success: false, error: "Invalid Paystack API key" });
     }
 
     return res.status(500).json({
@@ -217,6 +239,7 @@ router.get("/verify/:reference", async (req, res) => {
     });
   }
 });
+
 
 /** Get Order Status */
 router.get("/order/:id", async (req, res) => {
