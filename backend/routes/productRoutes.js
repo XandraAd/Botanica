@@ -17,6 +17,7 @@ import {
   addProductJson,
   getProductsByCategory,
   getSaleProducts,
+  getAllReviews
 } from "../controllers/productController.js";
 
 import { protect, admin } from "../middlewares/authMiddleware.js";
@@ -98,17 +99,34 @@ router.get("/featured", async (req, res) => {
 // ✅ Filtering with POST body
 router.post("/filtered-products", filterProducts);
 
-// ✅ Filtering with query params (category/collection)
-router.get("/", fetchProducts);
-
 // ✅ Category route (⚡ must be above /:id!)
 router.get("/category/:slug", getProductsByCategory);
+
+// ✅ All reviews (for homepage carousel)
+router.get("/reviews", async (req, res) => {
+  try {
+    const products = await Product.find().select("name images reviews");
+
+    const allReviews = products.flatMap((product) =>
+      product.reviews.map((review) => ({
+        ...review.toObject(),
+        productName: product.name,
+        productImage: product.images?.[0] || null,
+      }))
+    );
+
+    res.json({ reviews: allReviews });
+  } catch (error) {
+    console.error("❌ Error fetching reviews:", error);
+    res.status(500).json({ message: "Server error fetching reviews" });
+  }
+});
 
 // ✅ CRUD routes
 router
   .route("/")
+  .get(fetchProducts)
   .post(protect, admin, upload.single("image"), addProduct);
-
 
 router.get("/sale", getSaleProducts);
 
@@ -119,5 +137,10 @@ router
   .delete(protect, admin, removeProduct);
 
 router.post("/:id/reviews", protect, checkId, addProductReview);
+
+
+// Reviews list endpoint
+router.get("/reviews", getAllReviews);
+
 
 export default router;

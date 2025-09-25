@@ -1,80 +1,47 @@
-import React, { useState, useEffect } from 'react';
-
-import { FaStar, FaArrowLeft, FaArrowRight} from 'react-icons/fa';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { FaStar, FaArrowLeft, FaArrowRight, FaUser } from "react-icons/fa";
 
 const DisplayedReviews = () => {
-  // Sample reviews data with product images
-  const reviews = [
-    {
-      id: 1,
-      rating: 5,
-      text: "I've ordered from a lot of places, a lot! and I must say that this place here has the best shipping experience ever. Thank you guys so much for this 😊",
-      author: "Vincent Palm",
-      purchase: "Aglaonema Slam",
-      productImage: "/assets/products/aglaonema-slam.jpg",
-      authorImage: "/assets/customers/vincent.jpg"
-    },
-    {
-      id: 2,
-      rating: 5,
-      text: "The plants arrived in perfect condition and were even more beautiful than in the photos. Will definitely order again!",
-      author: "Sarah Johnson",
-      purchase: "Monstera Deliciosa",
-      productImage: "/assets/products/monstera.jpg",
-      authorImage: "/assets/customers/sarah.jpg"
-    },
-    {
-      id: 3,
-      rating: 5,
-      text: "Excellent customer service and the plants are thriving. The packaging was eco-friendly and secure.",
-      author: "Michael Chen",
-      purchase: "Snake Plant",
-      productImage: "/assets/products/snake-plant.jpg",
-      authorImage: "/assets/customers/michael.jpg"
-    },
-    {
-      id: 4,
-      rating: 5,
-      text: "Absolutely love my new plants! They've transformed my living space completely.",
-      author: "Emily Rodriguez",
-      purchase: "Fiddle Leaf Fig",
-      productImage: "/assets/products/fiddle-leaf.jpg",
-      authorImage: "/assets/customers/emily.jpg"
-    }
-  ];
-
+  const [reviews, setReviews] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [loading, setLoading] = useState(true);
 
-  // Auto-advance carousel
+  const BACKEND_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+  // Fetch reviews
   useEffect(() => {
-    if (!isAutoPlaying) return;
+    const fetchReviews = async () => {
+      try {
+        const { data } = await axios.get("/api/products/reviews?limit=10");
+        const reviewsData = Array.isArray(data) ? data : data.reviews || data.data || [];
+        setReviews(reviewsData);
+      } catch (err) {
+        console.error("Error fetching reviews:", err);
+        setReviews([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchReviews();
+  }, []);
 
+  // Auto-play carousel
+  useEffect(() => {
+    if (!isAutoPlaying || reviews.length === 0) return;
     const timer = setInterval(() => {
-      setCurrentIndex((prevIndex) => (prevIndex + 1) % reviews.length);
+      setCurrentIndex((prev) => (prev + 1) % reviews.length);
     }, 5000);
-
     return () => clearInterval(timer);
-  }, [isAutoPlaying, reviews.length]);
+  }, [isAutoPlaying, reviews]);
 
-  const nextSlide = () => {
-    setCurrentIndex((prevIndex) => (prevIndex + 1) % reviews.length);
-    setIsAutoPlaying(false);
-  };
+  const nextSlide = () => { setCurrentIndex((prev) => (prev + 1) % reviews.length); setIsAutoPlaying(false); };
+  const prevSlide = () => { setCurrentIndex((prev) => (prev - 1 + reviews.length) % reviews.length); setIsAutoPlaying(false); };
+  const goToSlide = (index) => { setCurrentIndex(index); setIsAutoPlaying(false); };
 
-  const prevSlide = () => {
-    setCurrentIndex((prevIndex) => (prevIndex - 1 + reviews.length) % reviews.length);
-    setIsAutoPlaying(false);
-  };
-
-  const goToSlide = (index) => {
-    setCurrentIndex(index);
-    setIsAutoPlaying(false);
-  };
-
-  // Function to render star ratings
-  const renderStars = (rating) => {
-    return Array(5).fill(0).map((_, i) => (
+  const renderStars = (rating) =>
+    Array.from({ length: 5 }, (_, i) => (
       <FaStar
         key={i}
         size={20}
@@ -83,100 +50,97 @@ const DisplayedReviews = () => {
         className="inline-block"
       />
     ));
+
+  const getProductImage = (review) => {
+    const img = review.productImage;
+    if (!img) return "https://via.placeholder.com/400x300/4ade80/ffffff?text=Plant+Image";
+    if (img.startsWith("http")) return img;
+    return img.startsWith("/uploads") ? `${BACKEND_URL}${img}` : `${BACKEND_URL}/${img.replace(/^\/+/, "")}`;
   };
 
+  const getUserAvatar = (review) => {
+    // 1️⃣ Use review.userAvatar if available
+    let avatar = review.userAvatar;
+
+    // 2️⃣ Fallback to user's account avatar if review.userAvatar missing
+    if (!avatar && review.user && review.user.avatar) {
+      avatar = review.user.avatar;
+    }
+
+    // 3️⃣ Construct full URL if needed
+    let avatarUrl = avatar ? (avatar.startsWith("http") ? avatar : `${BACKEND_URL}/${avatar.replace(/^\/+/, "")}`) : null;
+
+    // 4️⃣ Render
+    if (avatarUrl) {
+      return <img src={avatarUrl} alt={getUserName(review)} className="w-12 h-12 rounded-full object-cover border-2 border-green-400" />;
+    }
+
+    // 5️⃣ Default placeholder
+    return (
+      <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center text-white border-2 border-green-400">
+        <FaUser className="text-lg" />
+      </div>
+    );
+  };
+
+  const getUserName = (review) => review.userName || review.customerName || "Happy Plant Lover";
+  const getProductName = (review) => review.productName || "Beautiful Plant";
+
+  if (loading) return <div>Loading reviews...</div>;
+  if (!reviews.length) return <div>No reviews yet.</div>;
+
   return (
-    <section className="w-[95%] bg-green-900 mx-auto mt-4 text-white">
-      <div className="max-w-6xl mx-auto">
-        {/* Section Header */}
-        <div className="text-center mt-20 mb-8 ">
-          <h2 className="pt-16 text-3xl md:text-4xl font-bold">
-            OUR CUSTOMERS RARE REVIEWS
-          </h2>
-          <div className="w-20 h-1  mx-auto mb-6"></div>
-          <p className="text-lg  max-w-2xl mx-auto">
-            Discover what our beloved customers are saying about their plant shopping experience
-          </p>
-        </div>
-
-        {/* Carousel Container */}
-        <div className="relative max-w-4xl mx-auto">
-         
-
-          {/* Carousel Content */}
-          <div className="overflow-hidden rounded-2xl bg-white shadow-xl">
+    <section className="w-full bg-green-900 py-16 text-white">
+      <div className="max-w-7xl mx-auto px-4">
+        {/* Carousel */}
+        <div className="relative">
+          {reviews.length > 1 && (
+            <>
+              <button onClick={prevSlide} className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white p-4 rounded-full z-20">
+                <FaArrowLeft className="text-green-900" />
+              </button>
+              <button onClick={nextSlide} className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white p-4 rounded-full z-20">
+                <FaArrowRight className="text-green-900" />
+              </button>
+            </>
+          )}
+          <div className="overflow-hidden rounded-2xl bg-white shadow-2xl">
             <div
               className="flex transition-transform duration-500 ease-in-out"
               style={{ transform: `translateX(-${currentIndex * 100}%)` }}
             >
               {reviews.map((review, index) => (
-                <div
-                  key={review.id}
-                  className="w-full flex-shrink-0 flex flex-col md:flex-row"
-                >
+                <div key={review._id || index} className="w-full flex-shrink-0 flex flex-col md:flex-row min-h-96">
                   {/* Product Image */}
-                  <div className="w-full md:w-1/2 h-64 md:h-auto relative">
+                  <div className="w-full md:w-2/5 h-64 md:h-auto relative">
                     <img
-                      src={review.productImage}
-                      alt={review.purchase}
+                      src={getProductImage(review)}
+                      alt={getProductName(review)}
                       className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.target.src = "https://images.unsplash.com/photo-1485955900006-10f4d324d411?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80";
-                      }}
+                      onError={(e) => { e.target.src = "https://via.placeholder.com/400x300/4ade80/ffffff?text=Plant+Image"; }}
                     />
-                    <div className="absolute top-4 left-4 bg-green-600 text-white px-3 py-1 rounded-full text-sm">
-                      Purchased Item
+                    <div className="absolute top-4 left-4 bg-green-600 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg">
+                      {getProductName(review)}
+                    </div>
+                    <div className="absolute bottom-4 right-4 bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-xs">
+                      ⭐ {review.rating}/5
                     </div>
                   </div>
 
                   {/* Review Content */}
-                  <div className="w-full md:w-1/2 p-8 flex flex-col justify-center">
-                    {/* Star Rating */}
-                    <div className="flex mb-4">
-                      {renderStars(review.rating)}
-                    </div>
-
-                    {/* Review Text */}
-                    <p className="text-gray-700 text-lg leading-relaxed mb-6 italic">
-                      "{review.text}"
-                    </p>
-
-                    {/* Customer Info */}
-                    <div className="flex items-center">
-                      <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center text-white font-bold mr-4 overflow-hidden">
-                        {review.authorImage ? (
-                          <img
-                            src={review.authorImage}
-                            alt={review.author}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.target.parentElement.textContent = review.author.charAt(0);
-                            }}
-                          />
-                        ) : (
-                          review.author.charAt(0)
-                        )}
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-gray-900">{review.author}</h4>
+                  <div className="w-full md:w-3/5 p-8 flex flex-col justify-center bg-gradient-to-br from-white to-gray-50">
+                    <div className="flex mb-6 justify-center md:justify-start">{renderStars(review.rating || 5)}</div>
+                    <blockquote className="text-gray-800 text-lg md:text-xl leading-relaxed mb-8 text-center md:text-left italic">
+                      "{review.comment || "Excellent product and service!"}"
+                    </blockquote>
+                    <div className="flex items-center justify-center md:justify-start space-x-4">
+                      {getUserAvatar(review)}
+                      <div className="text-left">
+                        <h4 className="font-semibold text-gray-900 text-lg">{getUserName(review)}</h4>
                         <p className="text-sm text-gray-600">
-                          Purchased: <span className="text-green-700 font-medium">{review.purchase}</span>
+                          Verified Buyer • {new Date(review.createdAt).toLocaleDateString()}
                         </p>
                       </div>
-                       {/* Navigation Arrows */}
-          <button
-            onClick={prevSlide}
-            className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 bg-white rounded-full p-2 shadow-lg hover:bg-green-50 transition-colors"
-          >
-            <FaArrowLeft size={24} className="text-green-700" />
-          </button>
-
-          <button
-            onClick={nextSlide}
-            className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 bg-white rounded-full p-2 shadow-lg hover:bg-green-50 transition-colors"
-          >
-            <FaArrowRight size={24} className="text-green-700" />
-          </button>
                     </div>
                   </div>
                 </div>
@@ -184,38 +148,20 @@ const DisplayedReviews = () => {
             </div>
           </div>
 
-          {/* Carousel Indicators */}
-          <div className="flex justify-center mt-6 space-x-2">
-            {reviews.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => goToSlide(index)}
-                className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                  index === currentIndex ? 'bg-green-600 w-8' : 'bg-gray-300'
-                }`}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Stats Section */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-16  pt-12 border-t border-gray-200">
-          <div className="text-center mb-4">
-            <div className="text-3xl font-bold text-green-600 mb-2">4.9★</div>
-            <p className="text-sm text-white">Average Rating</p>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-green-600 mb-2">2K+</div>
-            <p className="text-sm text-white">Happy Customers</p>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-green-600 mb-2">98%</div>
-            <p className="text-sm text-white">Recommend Us</p>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-green-600 mb-2">24h</div>
-            <p className="text-sm text-white">Avg. Delivery</p>
-          </div>
+          {/* Indicators */}
+          {reviews.length > 1 && (
+            <div className="flex justify-center mt-8 space-x-3">
+              {reviews.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => goToSlide(idx)}
+                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                    idx === currentIndex ? "bg-green-400 w-8 transform scale-110" : "bg-white bg-opacity-50 hover:bg-opacity-75"
+                  }`}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </section>
@@ -223,3 +169,4 @@ const DisplayedReviews = () => {
 };
 
 export default DisplayedReviews;
+

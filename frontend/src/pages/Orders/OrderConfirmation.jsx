@@ -9,8 +9,15 @@ const OrderConfirmation = () => {
 
   const [order, setOrder] = useState(null);
   const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  // On mount, decide where to load order from
+  // Format currency properly
+  const formatPrice = (amount) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(amount || 0);
+
   useEffect(() => {
     const { order: stateOrder, success: stateSuccess = false } =
       location.state || {};
@@ -25,16 +32,16 @@ const OrderConfirmation = () => {
 
     const savedOrder = localStorage.getItem("lastOrder");
     if (savedOrder) {
-      // Case 2: refresh or direct visit after checkout
+      // Case 2: refresh or revisit after checkout
       setOrder(JSON.parse(savedOrder));
       setSuccess(true);
       return;
     }
 
     // Case 3: Paystack redirected back with ?reference=xxxx
-    const params = new URLSearchParams(location.search);
-    const ref = params.get("reference");
+    const ref = new URLSearchParams(location.search).get("reference");
     if (ref) {
+      setLoading(true);
       fetch(`${BASE_URL}/api/orders/by-reference/${ref}`)
         .then((res) => res.json())
         .then((data) => {
@@ -46,7 +53,8 @@ const OrderConfirmation = () => {
             setSuccess(false);
           }
         })
-        .catch(() => setSuccess(false));
+        .catch(() => setSuccess(false))
+        .finally(() => setLoading(false));
     }
   }, [location]);
 
@@ -59,8 +67,8 @@ const OrderConfirmation = () => {
 
   const getImageUrl = (imagePath) => {
     if (!imagePath) return "/fallback-image.jpg"; // fallback image
-    if (imagePath.startsWith("http")) return imagePath;
-    return `${BASE_URL}${imagePath}`;
+    if (/^https?:\/\//i.test(imagePath)) return imagePath;
+    return `${BASE_URL}${imagePath.startsWith("/") ? "" : "/"}${imagePath}`;
   };
 
   return (
@@ -69,7 +77,9 @@ const OrderConfirmation = () => {
         <div className="bg-white p-8 rounded-2xl shadow-lg">
           {/* Status header */}
           <div className="text-center mb-6">
-            {success ? (
+            {loading ? (
+              <p className="text-gray-500">Verifying your payment...</p>
+            ) : success ? (
               <>
                 <FaCheckCircle className="text-green-500 text-5xl mx-auto mb-3" />
                 <h1 className="text-2xl font-bold text-green-600">
@@ -85,7 +95,7 @@ const OrderConfirmation = () => {
           </div>
 
           {/* Order summary */}
-          {order && success && (
+          {order && success && !loading && (
             <div className="space-y-4">
               <div className="bg-gray-50 p-4 rounded-lg border">
                 <h2 className="font-semibold mb-3 text-lg text-gray-700">
@@ -102,11 +112,16 @@ const OrderConfirmation = () => {
                     </span>
                   </p>
                   <p>
-                    <strong>Total:</strong> ${order.totalPrice?.toFixed(2)}
+                    <strong>Total:</strong> {formatPrice(order.totalPrice)}
                   </p>
                   <p>
                     <strong>Payment:</strong> {order.paymentMethod}
                   </p>
+                  {order.reference && (
+                    <p className="col-span-2">
+                      <strong>Reference:</strong> {order.reference}
+                    </p>
+                  )}
                   {order.paidAt && (
                     <p className="col-span-2">
                       <strong>Paid At:</strong>{" "}
@@ -135,11 +150,11 @@ const OrderConfirmation = () => {
                             {item.name}
                           </p>
                           <p className="text-sm text-gray-500">
-                            Qty: {item.qty} × ${item.price}
+                            Qty: {item.qty} × {formatPrice(item.price)}
                           </p>
                         </div>
                         <p className="font-semibold text-gray-700">
-                          ${(item.qty * item.price).toFixed(2)}
+                          {formatPrice(item.qty * item.price)}
                         </p>
                       </li>
                     ))}

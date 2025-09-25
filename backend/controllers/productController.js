@@ -3,11 +3,8 @@
 import asyncHandler from "../middlewares/asyncHandler.js";
 import Product from "../models/productModel.js";
 import Collection from "../models/collectionModel.js";
-import Category from "../models/categoryModel.js"
+import Category from "../models/categoryModel.js";
 import Order from "../models/orderModel.js";
-
-
-
 
 // Create Product with images and update collections
 export const addProduct = asyncHandler(async (req, res) => {
@@ -54,26 +51,19 @@ export const addProduct = asyncHandler(async (req, res) => {
   if (collections?.length) {
     await Collection.updateMany(
       { _id: { $in: collections } },
-      { 
+      {
         $addToSet: { products: createdProduct._id }, // avoid duplicates
       }
     );
 
     // Optionally, update the count for all collections
-    await Collection.updateMany(
-      { _id: { $in: collections } },
-      [
-        { $set: { count: { $size: "$products" } } } // MongoDB aggregation pipeline to recalc count
-      ]
-    );
+    await Collection.updateMany({ _id: { $in: collections } }, [
+      { $set: { count: { $size: "$products" } } }, // MongoDB aggregation pipeline to recalc count
+    ]);
   }
 
   res.status(201).json(createdProduct);
 });
-
-
-
-
 
 export const addProductJson = asyncHandler(async (req, res) => {
   try {
@@ -89,14 +79,14 @@ export const addProductJson = asyncHandler(async (req, res) => {
   }
 });
 
-
 // ✅ Update Product
 
 export const updateProductDetails = asyncHandler(async (req, res) => {
   try {
     console.log("🛠 Incoming update body:", req.body);
 
-    const { name, description, price, category, collections, image, featured } = req.body;
+    const { name, description, price, category, collections, image, featured } =
+      req.body;
 
     const product = await Product.findById(req.params.id);
     if (!product) {
@@ -109,8 +99,11 @@ export const updateProductDetails = asyncHandler(async (req, res) => {
     product.price = price || product.price;
     if (image) product.images = [image];
     product.category = category || product.category;
-    product.collections = collections?.length ? collections : product.collections;
-    product.featured = typeof featured === "boolean" ? featured : product.featured;
+    product.collections = collections?.length
+      ? collections
+      : product.collections;
+    product.featured =
+      typeof featured === "boolean" ? featured : product.featured;
 
     const updatedProduct = await product.save();
 
@@ -123,8 +116,6 @@ export const updateProductDetails = asyncHandler(async (req, res) => {
   }
 });
 
-
-
 // ✅ Delete Product
 export const removeProduct = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id);
@@ -133,21 +124,20 @@ export const removeProduct = asyncHandler(async (req, res) => {
     throw new Error("Product not found");
   }
 
- if (product.collections?.length) {
-  for (const colId of product.collections) {
-    const collection = await Collection.findById(colId);
-    if (collection) {
-      collection.products.pull(product._id);
-      collection.count = collection.products.length;
-      await collection.save();
+  if (product.collections?.length) {
+    for (const colId of product.collections) {
+      const collection = await Collection.findById(colId);
+      if (collection) {
+        collection.products.pull(product._id);
+        collection.count = collection.products.length;
+        await collection.save();
+      }
     }
   }
-}
 
   await product.deleteOne();
   res.json({ message: "Product deleted" });
 });
-
 
 // ✅ Get products with pagination, search, category, and collection filter
 export const fetchProducts = asyncHandler(async (req, res) => {
@@ -186,8 +176,6 @@ export const fetchProducts = asyncHandler(async (req, res) => {
   });
 });
 
-
-
 // ✅ Get single product
 export const fetchProductById = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id);
@@ -206,46 +194,69 @@ export const fetchAllProducts = asyncHandler(async (req, res) => {
 });
 
 
-// ✅ Reviews
+// ✅ Add product review
 export const addProductReview = async (req, res) => {
-  const { rating, comment } = req.body;
-  const product = await Product.findById(req.params.id);
+  try {
+    const { rating, comment } = req.body;
+    const product = await Product.findById(req.params.id);
 
-  if (!product) {
-    return res.status(404).json({ message: "Product not found" });
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    // Prevent duplicate reviews
+    const alreadyReviewed = product.reviews.find(
+      (r) => r.user.toString() === req.user._id.toString()
+    );
+    if (alreadyReviewed) {
+      return res.status(400).json({ message: "Product already reviewed" });
+    }
+
+    // Verified buyer check
+    const hasOrdered = await Order.findOne({
+      user: req.user._id,
+      isPaid: true,
+      "orderItems.product": req.params.id,
+    });
+
+    if (!hasOrdered) {
+      return res.status(403).json({ message: "Only verified buyers can review" });
+    }
+
+    // Validate rating
+    if (rating < 1 || rating > 5) {
+      return res.status(400).json({ message: "Rating must be between 1 and 5" });
+    }
+
+    // Add new review
+    const review = {
+      user: req.user._id,
+      name: req.user.name,
+      rating: Number(rating),
+      comment,
+    };
+
+    product.reviews.push(review);
+
+    // Update stats
+    product.numReviews = product.reviews.length;
+    product.rating =
+      product.reviews.reduce((acc, item) => item.rating + acc, 0) /
+      product.reviews.length;
+
+    await product.save();
+
+    res.status(201).json({
+      message: "Review added",
+      review,
+      reviews: product.reviews,
+      numReviews: product.numReviews,
+      rating: product.rating,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
   }
-
-  // Check if user already reviewed
-  const alreadyReviewed = product.reviews.find(
-    (r) => r.user.toString() === req.user._id.toString()
-  );
-  if (alreadyReviewed) {
-    return res.status(400).json({ message: "Product already reviewed" });
-  }
-
-  // Check if user purchased the product
-  const hasOrdered = await Order.findOne({
-    user: req.user._id,
-    isPaid: true,            // or delivered
-    "orderItems.product": req.params.id,
-  });
-
-  if (!hasOrdered) {
-    return res.status(403).json({ message: "Only verified buyers can review" });
-  }
-
-  // Push new review
-  const review = {
-    user: req.user._id,
-    name: req.user.name,
-    rating: Number(rating),
-    comment,
-  };
-
-  product.reviews.push(review);
-  await product.save();
-
-  res.status(201).json({ message: "Review added", review });
 };
 
 
@@ -302,8 +313,6 @@ export const filterProducts = asyncHandler(async (req, res) => {
   res.json(products);
 });
 
-
-
 // ✅ Filter atgoris
 export const getProductsByCategory = async (req, res) => {
   try {
@@ -317,8 +326,10 @@ export const getProductsByCategory = async (req, res) => {
 
     // fetch products in this category
     const products = await Product.find({ category: category._id });
-const subcategories = [...new Set(products.map(p => p.subcategory).filter(Boolean))];
-    res.json({ products,subcategories });
+    const subcategories = [
+      ...new Set(products.map((p) => p.subcategory).filter(Boolean)),
+    ];
+    res.json({ products, subcategories });
   } catch (error) {
     console.error("Error fetching category products:", error);
     res.status(500).json({ message: "Server error" });
@@ -341,3 +352,31 @@ export const getSaleProducts = async (req, res) => {
   }
 };
 
+
+// ✅ Get all reviews across products (for homepage/testimonials)
+export const getAllReviews = asyncHandler(async (req, res) => {
+  const products = await Product.find({})
+    .populate("reviews.user", "name image")
+    .select("name images reviews");
+
+  const allReviews = products.flatMap((product) =>
+    product.reviews.map((review) => ({
+      _id: review._id,
+      rating: review.rating,
+      comment: review.comment,
+      createdAt: review.createdAt,
+      user: review.user
+        ? { name: review.user.name, image: review.user.image || null }
+        : null,
+      productName: product.name,
+      productImage: product.images?.[0] || null,
+    }))
+  );
+
+  // sort by newest first
+  allReviews.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  // optional: limit (e.g. latest 10 reviews for homepage)
+  const limit = Number(req.query.limit) || 10;
+  res.json(allReviews.slice(0, limit));
+});

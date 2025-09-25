@@ -23,7 +23,7 @@ export const createUser = asyncHandler(async (req, res) => {
 
   try {
     await newUser.save();
-    const token=createToken(res, newUser._id);
+    const token = createToken(res, newUser._id);
 
     res.status(201).json({
       _id: newUser._id,
@@ -31,14 +31,13 @@ export const createUser = asyncHandler(async (req, res) => {
       email: newUser.email,
       isAdmin: newUser.isAdmin,
       token,
-      message: "User created successfully"
+      message: "User created successfully",
     });
   } catch (error) {
     res.status(400);
     throw new Error("Invalid user data");
   }
 });
-
 
 // @desc    Auth user & get token
 // @route   POST /api/users/auth
@@ -64,7 +63,6 @@ export const loginUser = asyncHandler(async (req, res) => {
     res.status(401);
     throw new Error("Invalid email or password");
   }
-  
 
   // ✅ create token and set cookie
   const token = createToken(res, user._id);
@@ -76,11 +74,10 @@ export const loginUser = asyncHandler(async (req, res) => {
     email: user.email,
     avatar: user.avatar,
     isAdmin: user.isAdmin,
-    token, 
+    token,
     message: "Login successful",
   });
 });
-
 
 export const logoutCurrentUser = asyncHandler(async (req, res) => {
   // Clear cookie
@@ -90,11 +87,12 @@ export const logoutCurrentUser = asyncHandler(async (req, res) => {
   });
 
   // Tell frontend to clear local token as well
-  res.status(200).json({ message: "Logged out successfully, clear client token" });
+  res
+    .status(200)
+    .json({ message: "Logged out successfully, clear client token" });
 });
 
-
-export  const getAllUsers = asyncHandler(async (req, res) => {
+export const getAllUsers = asyncHandler(async (req, res) => {
   try {
     const users = await User.find({}).select("-password");
     res.json(users);
@@ -121,38 +119,40 @@ export const getCurrentUserProfile = asyncHandler(async (req, res) => {
   }
 });
 
+
 export const updateCurrentUserProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id);
 
-  if (user) {
-    user.name = req.body.name || user.name;
-    user.email = req.body.email || user.email;
-
-    if (req.body.password) {
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(req.body.password, salt);
-      user.password = hashedPassword;
-    }
-
-    // ✅ Add avatar update support
-    if (req.body.avatar) {
-      user.avatar = req.body.avatar;
-    }
-
-    const updatedUser = await user.save();
-
-    res.json({
-      _id: updatedUser._id,
-      name: updatedUser.name,
-      email: updatedUser.email,
-      avatar: updatedUser.avatar, // send avatar back
-      isAdmin: updatedUser.isAdmin,
-      message: "Profile updated successfully"
-    });
-  } else {
+  if (!user) {
     res.status(404);
     throw new Error("User not found");
   }
+
+  // Update basic info
+  user.name = req.body.name || user.name;
+  user.email = req.body.email || user.email;
+
+  // Update password if provided
+  if (req.body.password) {
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(req.body.password, salt);
+  }
+
+  // Update avatar URL directly
+  if (req.body.avatar) {
+    user.avatar = req.body.avatar; // must be a valid Cloudinary URL
+  }
+
+  const updatedUser = await user.save();
+
+  res.json({
+    _id: updatedUser._id,
+    name: updatedUser.name,
+    email: updatedUser.email,
+    avatar: updatedUser.avatar,
+    isAdmin: updatedUser.isAdmin,
+    message: "Profile updated successfully",
+  });
 });
 
 export const deleteUserById = asyncHandler(async (req, res) => {
@@ -198,14 +198,13 @@ export const updateUserById = asyncHandler(async (req, res) => {
       name: updatedUser.name,
       email: updatedUser.email,
       isAdmin: updatedUser.isAdmin,
-      message: "User updated successfully"
+      message: "User updated successfully",
     });
   } else {
     res.status(404);
     throw new Error("User not found");
   }
 });
-
 
 // @desc Get logged-in user's addresses
 export const getUserAddresses = async (req, res) => {
@@ -266,4 +265,16 @@ export const deleteUserAddress = async (req, res) => {
   }
 };
 
+//upload avatar
+export const uploadAvatar = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    res.status(400);
+    throw new Error("No file uploaded");
+  }
 
+  const result = await cloudinary.uploader.upload(req.file.path, {
+    folder: "avatars",
+  });
+
+  res.status(200).json({ url: result.secure_url });
+});

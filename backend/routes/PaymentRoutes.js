@@ -4,8 +4,13 @@ import Order from "../models/orderModel.js";
 import sendEmail from "../utils/sendEmail.js";
 import { protect } from "../middlewares/authMiddleware.js";
 import Cart from "../models/CartModel.js";
+import Product from "../models/productModel.js"; // ✅ added missing import
 
 const router = express.Router();
+
+// ✅ Use env vars for URLs
+const BASE_URL = process.env.BASE_URL || "http://localhost:5000";
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 
 /** Health check */
 router.get("/health", (req, res) => {
@@ -32,7 +37,6 @@ const convertUsdToGhs = async (amountUsd) => {
     return Number(amountUsd) * 13;
   }
 };
-
 
 // Initialize Paystack payment
 router.post("/initialize", protect, async (req, res) => {
@@ -76,7 +80,7 @@ router.post("/initialize", protect, async (req, res) => {
         amount: paystackAmount,
         currency: "GHS",
         reference,
-        callback_url: "http://localhost:5000/api/payment/callback",
+        callback_url: `${BASE_URL}/api/payment/callback`, // ✅ dynamic
         metadata: { orderId: order._id.toString(), userId: req.user._id },
       },
       { headers: { Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}` } }
@@ -89,7 +93,6 @@ router.post("/initialize", protect, async (req, res) => {
       orderId: order._id,
       amountInGhs,
     });
-
   } catch (err) {
     console.error("Order error:", err.response?.data || err.message);
     res.status(500).json({
@@ -99,7 +102,6 @@ router.post("/initialize", protect, async (req, res) => {
     });
   }
 });
-
 
 router.get("/verify/:reference", async (req, res) => {
   const { reference } = req.params;
@@ -192,7 +194,6 @@ router.get("/verify/:reference", async (req, res) => {
       message: "Payment not successful",
       paystackStatus: verification.data?.status,
     });
-
   } catch (err) {
     console.error("Payment verification error:", err.response?.data || err.message);
 
@@ -211,7 +212,6 @@ router.get("/verify/:reference", async (req, res) => {
   }
 });
 
-
 /** Get Order Status */
 router.get("/order/:id", async (req, res) => {
   try {
@@ -222,7 +222,6 @@ router.get("/order/:id", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 
 router.get("/callback", async (req, res) => {
   const { reference } = req.query;
@@ -243,17 +242,17 @@ router.get("/callback", async (req, res) => {
 
       // ✅ Redirect user back to frontend with status
       return res.redirect(
-        `http://localhost:5173/payment-success?reference=${reference}&status=success`
+        `${FRONTEND_URL}/payment-success?reference=${reference}&status=success`
       );
     } else {
       return res.redirect(
-        `http://localhost:5173/payment-failed?reference=${reference}&status=failed`
+        `${FRONTEND_URL}/payment-failed?reference=${reference}&status=failed`
       );
     }
   } catch (err) {
     console.error("Callback error:", err.message);
     return res.redirect(
-      `http://localhost:5173/payment-failed?reference=${reference}&status=error`
+      `${FRONTEND_URL}/payment-failed?reference=${reference}&status=error`
     );
   }
 });
@@ -283,6 +282,4 @@ router.post("/:id/review", protect, async (req, res) => {
   res.status(201).json({ message: "Review added" });
 });
 
-
 export default router;
-
