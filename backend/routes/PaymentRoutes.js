@@ -10,7 +10,7 @@ const router = express.Router();
 
 // ✅ Use env vars for URLs
 const BASE_URL = process.env.BASE_URL || "http://localhost:5000";
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+const CLIENT_URL= process.env.CLIENT_URL || "http://localhost:5173";
 
 /** Health check */
 router.get("/health", (req, res) => {
@@ -80,7 +80,7 @@ const paystackRes = await axios.post(
     amount: paystackAmount,
     currency: "GHS",
     reference,
-    callback_url: `${process.env.BASE_URL}/api/payment/callback`, // ✅ backend URL from .env
+    callback_url: `${process.env.CLIENT_URL}/api/payment/callback`, 
     metadata: { orderId: order._id.toString(), userId: req.user._id },
   },
   {
