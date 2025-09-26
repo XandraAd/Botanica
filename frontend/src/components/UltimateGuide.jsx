@@ -1,6 +1,5 @@
 import React from "react";
-import { FaPlay } from "react-icons/fa";
-import { IoClose } from "react-icons/io5";
+import { BASE_URL } from "../store/constants";
 
 const UltimateGuide = () => {
 
@@ -33,7 +32,7 @@ const UltimateGuide = () => {
         <div className="relative w-full h-[300px] sm:h-[400px] lg:h-[500px] overflow-hidden rounded-2xl shadow-lg">
           {/* Thumbnail Image */}
           <img
-            src="http://localhost:5000/assets/plant-bn-5.webp"
+            src={`${BASE_URL}/assets/plant-bn-5.webp`}
             alt="GreenHouse Video Thumbnail"
             className="w-full h-full object-cover"
           />

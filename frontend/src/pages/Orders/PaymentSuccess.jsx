@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 const PaymentSuccess = () => {
@@ -6,13 +6,18 @@ const PaymentSuccess = () => {
   const location = useLocation();
 
   useEffect(() => {
-    const ref = new URLSearchParams(location.search).get("reference");
+    const params = new URLSearchParams(location.search);
+    const reference = params.get("reference");
+    const orderId = params.get("orderId");
 
-    if (ref) {
-      // 🚀 Instant redirect to OrderConfirmation with reference
-      navigate(`/order-confirmation?reference=${ref}`, { replace: true });
+    if (orderId) {
+      // COD or Paystack with orderId
+      navigate(`/order-confirmation?orderId=${orderId}${reference ? `&reference=${reference}` : ""}`, { replace: true });
+    } else if (reference) {
+      // Fallback for Paystack reference only
+      navigate(`/order-confirmation?reference=${reference}`, { replace: true });
     } else {
-      // fallback if no reference
+      // No info, go home
       navigate("/", { replace: true });
     }
   }, [location, navigate]);
@@ -22,9 +27,7 @@ const PaymentSuccess = () => {
       <div className="bg-white p-8 rounded-lg shadow-md text-center max-w-md">
         <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
         <h1 className="text-2xl font-bold text-blue-600 mb-2">Redirecting...</h1>
-        <p className="text-gray-600">
-          Please wait while we confirm your payment.
-        </p>
+        <p className="text-gray-600">Please wait while we confirm your payment.</p>
       </div>
     </div>
   );

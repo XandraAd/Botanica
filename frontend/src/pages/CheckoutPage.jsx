@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import AddressForm from "./Orders/AddressForm";
 import { useAddAddressMutation } from "../slices/UsersSlice";
 import { toast } from "react-toastify";
-import { ORDERS_URL, ADDRESSES_URL, API_URL } from "../store/constants";
+import { ORDERS_URL, ADDRESSES_URL, API_URL, BASE_URL } from "../store/constants";
 
 const CheckoutPage = () => {
   const [hasCoupon, setHasCoupon] = useState(false);
@@ -116,7 +116,9 @@ const CheckoutPage = () => {
           _id: item._id,
           name: item.name,
           qty: item.quantity,
-          image: item.images[0] || item.image,
+          image: item.images?.[0]
+            ? `${BASE_URL}${item.images[0]}`
+            : `${BASE_URL}${item.image}`,
           price: item.price,
           size: item.size,
           product: item._id,
@@ -139,7 +141,6 @@ const CheckoutPage = () => {
       };
 
       if (formData.paymentMethod === "paystack") {
-        // Paystack initialization via backend
         const { data } = await axios.post(
           `${API_URL}/payment/initialize`,
           {
@@ -161,7 +162,6 @@ const CheckoutPage = () => {
         setGhsTotal(data.amountInGhs);
         window.location.href = data.authUrl; // redirect to Paystack
       } else {
-        // Card or COD orders
         const { data } = await axios.post(ORDERS_URL, orderPayload, {
           headers: { "Content-Type": "application/json" },
           withCredentials: true,
