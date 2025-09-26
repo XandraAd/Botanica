@@ -1,13 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import {
-  FaUser,
-  FaSave,
-  FaTimes,
-  FaEye,
-  FaEyeSlash,
-  FaCheckCircle,
-} from "react-icons/fa";
+import { FaUser, FaSave, FaTimes, FaEye, FaEyeSlash, FaCheckCircle } from "react-icons/fa";
 import { toast } from "react-toastify";
 import axios from "axios";
 import { setCredentials } from "../../slices/authSlice";
@@ -24,7 +17,7 @@ const AccountDetailsForm = () => {
     newPassword: "",
     confirmPassword: "",
   });
-  const [avatarFile, setAvatarFile] = useState(null); // actual file to upload
+  const [avatarFile, setAvatarFile] = useState(null);
   const [avatarUrl, setAvatarUrl] = useState(userInfo?.avatar || "");
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState({
@@ -33,7 +26,6 @@ const AccountDetailsForm = () => {
     confirm: false,
   });
   const [message, setMessage] = useState("");
-  const [addresses, setAddresses] = useState([]);
   const [uploading, setUploading] = useState(false);
 
   // Initialize form
@@ -50,34 +42,24 @@ const AccountDetailsForm = () => {
     }
   }, [userInfo]);
 
-  // Fetch addresses
-  useEffect(() => {
-    const fetchAddresses = async () => {
-      try {
-        const { data } = await axios.get("/api/addresses");
-        setAddresses(data);
-      } catch (err) {
-        console.error("Error fetching addresses:", err);
-      }
-    };
-    fetchAddresses();
-  }, []);
-
-  // Handle text input changes
+  // Handle form changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
     if (errors[name]) setErrors({ ...errors, [name]: "" });
   };
 
- const handleAvatarChange = (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
+  // Avatar file selection
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setAvatarFile(file);
 
-  // If you already uploaded to Cloudinary elsewhere and have the URL:
-  const cloudinaryUrl = file.cloudinaryUrl || ""; // replace with your actual URL
-  setAvatarUrl(cloudinaryUrl);
-};
+    // Show preview immediately
+    const reader = new FileReader();
+    reader.onloadend = () => setAvatarUrl(reader.result);
+    reader.readAsDataURL(file);
+  };
 
   const togglePasswordVisibility = (field) => {
     setShowPassword({ ...showPassword, [field]: !showPassword[field] });
@@ -87,8 +69,7 @@ const AccountDetailsForm = () => {
     const newErrors = {};
     if (!formData.name.trim()) newErrors.name = "Name is required";
     if (!formData.email.trim()) newErrors.email = "Email is required";
-    else if (!/\S+@\S+\.\S+/.test(formData.email))
-      newErrors.email = "Email is invalid";
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Email is invalid";
 
     if (formData.currentPassword || formData.newPassword || formData.confirmPassword) {
       if (!formData.currentPassword) newErrors.currentPassword = "Current password is required";
@@ -102,26 +83,56 @@ const AccountDetailsForm = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const uploadAvatarToServer = async () => {
+    if (!avatarFile) return avatarUrl;
+
+    const formData = new FormData();
+    formData.append("avatar", avatarFile);
+
+    setUploading(true);
+    try {
+      const { data } = await axios.post("/api/users/upload-avatar", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${userInfo.token}`,
+        },
+      });
+      setUploading(false);
+      return data.url;
+    } catch (err) {
+      setUploading(false);
+      console.error("Avatar upload failed:", err);
+      toast.error(err?.response?.data?.message || "Avatar upload failed");
+      throw new Error("Avatar upload failed");
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
 
     try {
+      // Upload avatar first if file selected
+      const finalAvatarUrl = await uploadAvatarToServer();
+
       const payload = {
         name: formData.name,
         email: formData.email,
         password: formData.newPassword || undefined,
-        avatar: avatarUrl, // this is the Cloudinary URL
+        avatar: finalAvatarUrl,
       };
 
-      const { data } = await axios.put("/api/users/profile", payload);
+      const { data } = await axios.put("/api/users/profile", payload, {
+        headers: { Authorization: `Bearer ${userInfo.token}` },
+      });
 
       dispatch(setCredentials(data));
       setMessage("Profile updated successfully");
       setFormData({ ...formData, currentPassword: "", newPassword: "", confirmPassword: "" });
+      setAvatarFile(null);
       toast.success("Profile updated successfully");
     } catch (err) {
-      console.error(err);
+      console.error("Profile update failed:", err);
       toast.error(err?.response?.data?.message || "Failed to update profile");
     }
   };
@@ -230,19 +241,6 @@ const AccountDetailsForm = () => {
           ))}
         </div>
 
-        {/* Addresses */}
-        <div className="bg-gray-50 p-5 rounded-xl space-y-4">
-          <h3 className="text-lg font-medium">Your Addresses</h3>
-          {addresses.length === 0 && <p className="text-gray-600">No addresses added yet.</p>}
-          {addresses.map((addr) => (
-            <div key={addr._id} className="border p-3 rounded-lg bg-white">
-              <p>{addr.fullName}</p>
-              <p>{addr.street}, {addr.city}, {addr.country}</p>
-              <p>Phone: {addr.phone}</p>
-            </div>
-          ))}
-        </div>
-
         {/* Actions */}
         <div className="flex gap-3 justify-end">
           <button
@@ -255,8 +253,9 @@ const AccountDetailsForm = () => {
           <button
             type="submit"
             className="px-5 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center"
+            disabled={uploading}
           >
-            <FaSave className="mr-2" /> Save Changes
+            <FaSave className="mr-2" /> {uploading ? "Uploading..." : "Save Changes"}
           </button>
         </div>
       </form>

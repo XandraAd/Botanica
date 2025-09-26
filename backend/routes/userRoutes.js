@@ -1,5 +1,7 @@
 import express from "express";
 import multer from "multer";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+import cloudinary from "../config/cloudinary.js";
 import {
   createUser,
   loginUser,
@@ -12,41 +14,40 @@ import {
   updateUserById,
   uploadAvatar,
 } from "../controllers/userController.js";
-
 import { protect, admin } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-
-// Multer setup for file uploads
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "uploads/"); // make sure uploads/ folder exists
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + "-" + file.originalname);
+// Cloudinary storage for avatars
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: "avatars",
+    allowed_formats: ["jpg", "jpeg", "png", "webp"],
+    transformation: [{ quality: "auto", fetch_format: "auto" }],
   },
 });
+
 const upload = multer({ storage });
 
-router
-  .route("/")
-  .post(createUser)
-  .get(protect, admin, getAllUsers);
+// PUBLIC ROUTES
+router.route("/").post(createUser); // Create new user
+router.post("/auth", loginUser); // Login
+router.post("/logout", logoutCurrentUser); // Logout
 
-router.post("/auth", loginUser);
-router.post("/logout", logoutCurrentUser);
+// PROTECTED ROUTES
+router.post("/upload-avatar", protect, upload.single("avatar"), uploadAvatar); // Upload avatar
 
-
-router.post("/upload-avatar", protect, uploadAvatar);
-
-// Add `upload.single('avatar')` middleware before your controller
 router
   .route("/profile")
-  .get(protect, getCurrentUserProfile)
-  .put(protect, upload.single("avatar"), updateCurrentUserProfile); // ✅ handle avatar upload
+  .get(protect, getCurrentUserProfile) // Get current user
+  .put(protect, upload.single("avatar"), updateCurrentUserProfile); // Update profile & optional avatar
 
 // ADMIN ROUTES
+router
+  .route("/")
+  .get(protect, admin, getAllUsers); // Get all users (admin only)
+
 router
   .route("/:id")
   .delete(protect, admin, deleteUserById)

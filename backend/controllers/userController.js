@@ -265,16 +265,23 @@ export const deleteUserAddress = async (req, res) => {
   }
 };
 
-//upload avatar
+// Upload avatar
 export const uploadAvatar = asyncHandler(async (req, res) => {
   if (!req.file) {
     res.status(400);
     throw new Error("No file uploaded");
   }
 
-  const result = await cloudinary.uploader.upload(req.file.path, {
-    folder: "avatars",
-  });
+  // Save URL to user profile
+  const user = await User.findById(req.user._id);
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
 
-  res.status(200).json({ url: result.secure_url });
+  user.avatar = req.file.path; // Cloudinary URL
+  await user.save();
+
+  res.status(200).json({ url: req.file.path });
 });
+

@@ -313,7 +313,7 @@ export const filterProducts = asyncHandler(async (req, res) => {
   res.json(products);
 });
 
-// ✅ Filter atgoris
+// ✅ Filter categorised products
 export const getProductsByCategory = async (req, res) => {
   try {
     const { slug } = req.params;
@@ -353,30 +353,77 @@ export const getSaleProducts = async (req, res) => {
 };
 
 
-// ✅ Get all reviews across products (for homepage/testimonials)
+// ==================================================
+// Get All Reviews (with product + user info)
+// ==================================================
 export const getAllReviews = asyncHandler(async (req, res) => {
-  const products = await Product.find({})
-    .populate("reviews.user", "name image")
-    .select("name images reviews");
+  const BASE_URL = process.env.BASE_URL || "http://localhost:5000";
+
+  const products = await Product.find({ "reviews.0": { $exists: true } })
+    .select("name images reviews")
+    .populate("reviews.user", "name avatar");
 
   const allReviews = products.flatMap((product) =>
-    product.reviews.map((review) => ({
+    product.reviews.map((review) => {
+      let productImage = product.images?.[0] || null;
+      if (productImage && !productImage.startsWith("http")) {
+        productImage = `${BASE_URL}/${productImage.replace(/^\/+/, "")}`;
+      }
+
+      let userAvatar = review.user?.avatar || null;
+      if (userAvatar && !userAvatar.startsWith("http")) {
+        userAvatar = `${BASE_URL}/${userAvatar.replace(/^\/+/, "")}`;
+      }
+
+      return {
+        _id: review._id,
+        rating: review.rating,
+        comment: review.comment,
+        createdAt: review.createdAt,
+        userName: review.user?.name || "Happy Plant Lover",
+        userAvatar,
+        productName: product.name,
+        productImage,
+      };
+    })
+  );
+
+  allReviews.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const limit = Number(req.query.limit) || 10;
+  res.json(allReviews.slice(0, limit));
+});
+
+// ==================================================
+// Get Reviews for a Single Product
+// ==================================================
+export const getProductReviews = asyncHandler(async (req, res) => {
+  const BASE_URL = process.env.BASE_URL || "http://localhost:5000";
+  const product = await Product.findById(req.params.id).populate(
+    "reviews.user",
+    "name avatar"
+  );
+
+  if (!product) {
+    res.status(404);
+    throw new Error("Product not found");
+  }
+
+  const reviews = product.reviews.map((review) => {
+    let userAvatar = review.user?.avatar || null;
+    if (userAvatar && !userAvatar.startsWith("http")) {
+      userAvatar = `${BASE_URL}/${userAvatar.replace(/^\/+/, "")}`;
+    }
+
+    return {
       _id: review._id,
       rating: review.rating,
       comment: review.comment,
       createdAt: review.createdAt,
-      user: review.user
-        ? { name: review.user.name, image: review.user.image || null }
-        : null,
-      productName: product.name,
-      productImage: product.images?.[0] || null,
-    }))
-  );
+      userName: review.user?.name || "Happy Plant Lover",
+      userAvatar,
+    };
+  });
 
-  // sort by newest first
-  allReviews.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-  // optional: limit (e.g. latest 10 reviews for homepage)
-  const limit = Number(req.query.limit) || 10;
-  res.json(allReviews.slice(0, limit));
+  res.json(reviews);
 });
+

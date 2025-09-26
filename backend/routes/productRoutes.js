@@ -2,7 +2,7 @@ import express from "express";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
-
+import Product from "../models/productModel.js";
 import {
   addProduct,
   updateProductDetails,
@@ -17,12 +17,13 @@ import {
   addProductJson,
   getProductsByCategory,
   getSaleProducts,
-  getAllReviews
+  getAllReviews,
+  getProductReviews,
+  fetchPopularProducts // Added this missing controller
 } from "../controllers/productController.js";
 
 import { protect, admin } from "../middlewares/authMiddleware.js";
 import checkId from "../middlewares/checkId.js";
-import Product from "../models/productModel.js";
 
 const router = express.Router();
 
@@ -62,30 +63,9 @@ const upload = multer({
   },
 });
 
-// ✅ JSON seeding
-router.post("/json", protect, admin, addProductJson);
+// ===== PUBLIC ROUTES =====
 
-// ✅ Popular
-router.get("/popular", async (req, res) => {
-  try {
-    const products = await Product.find({}).sort({ sold: -1 }).limit(10);
-
-    if (!products.length) {
-      return res.status(404).json({ error: "No popular products found" });
-    }
-
-    res.json(products);
-  } catch (error) {
-    res.status(500).json({ message: "Failed to fetch popular products" });
-  }
-});
-
-// ✅ Other fixed routes
-router.get("/top", fetchTopProducts);
-router.get("/new", fetchNewProducts);
-router.get("/allproducts", fetchAllProducts);
-
-// ✅ Featured (⚡ must be above /:id)
+// ✅ Featured products
 router.get("/featured", async (req, res) => {
   try {
     const products = await Product.find({ featured: true });
@@ -96,51 +76,58 @@ router.get("/featured", async (req, res) => {
   }
 });
 
-// ✅ Filtering with POST body
-router.post("/filtered-products", filterProducts);
+// ✅ Popular products
+router.get("/popular", fetchPopularProducts);
 
-// ✅ Category route (⚡ must be above /:id!)
-router.get("/category/:slug", getProductsByCategory);
+// ✅ Top rated products
+router.get("/top", fetchTopProducts);
 
-// ✅ All reviews (for homepage carousel)
-router.get("/reviews", async (req, res) => {
-  try {
-    const products = await Product.find().select("name images reviews");
+// ✅ New products (last 30 days or featured)
+router.get("/new", fetchNewProducts);
 
-    const allReviews = products.flatMap((product) =>
-      product.reviews.map((review) => ({
-        ...review.toObject(),
-        productName: product.name,
-        productImage: product.images?.[0] || null,
-      }))
-    );
-
-    res.json({ reviews: allReviews });
-  } catch (error) {
-    console.error("❌ Error fetching reviews:", error);
-    res.status(500).json({ message: "Server error fetching reviews" });
-  }
-});
-
-// ✅ CRUD routes
-router
-  .route("/")
-  .get(fetchProducts)
-  .post(protect, admin, upload.single("image"), addProduct);
-
+// ✅ Sale products
 router.get("/sale", getSaleProducts);
 
-router
-  .route("/:id")
-  .get(fetchProductById)
-  .put(protect, admin, upload.single("image"), updateProductDetails)
-  .delete(protect, admin, removeProduct);
+// ✅ All products (limited to 12)
+router.get("/allproducts", fetchAllProducts);
 
-router.post("/:id/reviews", protect, checkId, addProductReview);
+// ✅ Products by category slug
+router.get("/category/:slug", getProductsByCategory);
 
-
-// Reviews list endpoint
+// ✅ All reviews for homepage carousel
 router.get("/reviews", getAllReviews);
 
+// ✅ Filter products with POST
+router.post("/filtered-products", filterProducts);
+
+// ✅ Get products with pagination/search/filters
+router.get("/", fetchProducts);
+
+// ===== PROTECTED ROUTES =====
+
+// ✅ Add review to product (Protected users)
+router.post("/:id/reviews", protect, checkId, addProductReview);
+
+// ===== ADMIN ROUTES =====
+
+// ✅ JSON seeding (Admin only)
+router.post("/json", protect, admin, addProductJson);
+
+// ✅ Create product (Admin only)
+router.post("/", protect, admin, upload.single("image"), addProduct);
+
+// ===== DYNAMIC ID ROUTES (MUST BE LAST) =====
+
+// ✅ Get product by ID
+router.get("/:id", fetchProductById);
+
+// ✅ Get reviews for specific product
+router.get("/:id/reviews", getProductReviews);
+
+// ✅ Update product (Admin only)
+router.put("/:id", protect, admin, upload.single("image"), updateProductDetails);
+
+// ✅ Delete product (Admin only)
+router.delete("/:id", protect, admin, removeProduct);
 
 export default router;
